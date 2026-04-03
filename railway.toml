@@ -1,5 +1,6 @@
 [build]
 builder = "railpack"
+buildCommand = "npm run build"
 
 [build.railpack]
 phpVersion = "8.4"
