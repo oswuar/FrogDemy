@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Administrativo</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="html2pdf.bundle.min.js"></script>
+    <script src="auth.js"></script>
+    <script src="api.js"></script>
+</head>
+
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="logo" style="margin-bottom: 10px;">Panel Administrativo</div>
+            <small id="userNameDisplay" style="color: var(--accent); margin-bottom: 20px;">Cargando...</small>
+
+            <button onclick="showSection('inicio')">Inicio</button>
+            <button onclick="showSection('perfil')">Perfil</button>
+            <button onclick="showSection('periodos')">Periodos</button>
+            <button onclick="showSection('estudiantes')">Gestionar Estudiantes</button>
+            <button onclick="showSection('docentes')">Gestionar Docentes</button>
+            <button onclick="showSection('horarios')">Horarios</button>
+            <button onclick="showSection('materias')">Materias</button>
+            <button onclick="showSection('inscripciones')">Gestionar Inscripciones</button>
+            <button onclick="showSection('ayuda')">Ayuda</button>
+            <button onclick="logout()" style="margin-top: auto; color: var(--danger);">Cerrar Sesión</button>
+        </aside>
+
+        <main class="main-content">
+
+
+            <div id="inicio" class="view-section active">
+                <h2>Inicio</h2>
+            </div>
+
+            <div id="ayuda" class="view-section">
+                <h2>Ayuda</h2>
+                <h3>Manual de Usuario para Docentes</h3>
+            </div>
+
+            <div id="perfil" class="view-section">
+                <h2>Dashboard</h2>
+                <table id="tabla_dashboard">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Cedula</th>
+                            <th>Fecha de Nacimiento</th>
+                            <th>Correo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo_dashboard">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="periodos" class="view-section ">
+                <h2>Periodos</h2>
+                <button onclick="showSection('formPeriodo')" class="btn btn-primary">+ Crear</button>
+                <table id="tabla_periodos">
+                    <thead>
+                        <tr>
+                            <th>Año</th>
+                            <th>Periodo</th>
+                            <th>Fecha de Inicio</th>
+                            <th>Fecha de Cierre</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo_periodos">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="formPeriodo" style="margin-left: 300px;" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Crear Periodo</h2>
+                <form id="createPeriodoForm">
+                    <div class="form-group">
+                        <label>Año</label>
+                        <input type="number" min="1984" max="2100" name="año" placeholder="año de Periodo" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Numero de Periodo</label>
+                        <input type="number" min="1" max="2" name="numero_de_periodo" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Fecha de Inicio</label>
+                        <input type="date" name="fecha_de_inicio" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Fecha de cierre</label>
+                        <input type="date" name="fecha_de_cierre" id="">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Crear</button>
+                </form>
+
+                <script>
+                    const periodoForm = document.getElementById('createPeriodoForm');
+                    periodoForm.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        const formData = new FormData(periodoForm);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        /* console.log(jsonData); */
+
+                        crearPeriodo(jsonData);
+                    });
+                </script>
+
+            </div>
+
+
+            <div id="editPeriodo" style="margin-left: 300px;" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Editar Periodo</h2>
+                <form id="editPeriodoForm">
+                    <div class="form-group">
+                        <label>Año</label>
+                        <input type="number" min="1984" max="2100" name="año" placeholder="año de Periodo" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Numero de Periodo</label>
+                        <input type="number" min="1" max="2" name="numero_de_periodo" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Fecha de Inicio</label>
+                        <input type="date" name="fecha_de_inicio" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Fecha de cierre</label>
+                        <input type="date" name="fecha_de_cierre" id="">
+                        <input type="hidden" name="id" id="id_edit_periodo">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar</button>
+                </form>
+
+                <script>
+                    const periodoEdit = document.getElementById('editPeriodoForm');
+
+                    periodoEdit.addEventListener('submit', function (e) {
+                        e.preventDefault();
+
+                        const id_edit_periodo = document.getElementById('id_edit_periodo').value;
+
+                        const formData = new FormData(periodoEdit);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        /* console.log(jsonData); */
+
+                        actualizarPeriodo(jsonData, id_edit_periodo);
+                    });
+                </script>
+
+            </div>
+
+            <div id="estudiantes" class="view-section">
+                <div class="section-header">
+                    <h2>Estudiantes</h2>
+                    <div class="search-wrapper">
+                        <input type="text" id="buscadorInput" class="search-input" placeholder="Buscar cedula del estudiante" onkeyup="filtrarBusqueda()">
+                        <svg class="search-icon-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
+                
+                    <!-- Contenedor del Buscador -->
+                <table id="tabla_estudiantes">
+                    <thead>
+                        <tr>
+                            <th>Cedula</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Numero de Matricula</th>
+                            <th>Año de Ingreso</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo_estudiantes">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="docentes" class="view-section">
+                <h2>Docentes</h2>
+                <button onclick="showSection('formDocente')" class="btn btn-primary">+ Añadir Docente</button>
+                <table id="tabla_docentes">
+                    <thead>
+                        <tr>
+                            <th>Cedula</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Materia</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo_docentes">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="formDocente" style="margin-left: 300px;" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Crear Docente</h2>
+                <form id="createDocenteForm">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" required name="nombre" id="">
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido</label>
+                        <input type="text" required name="apellido" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Cedula</label>
+                        <input type="text" required name="cedula" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Correo</label>
+                        <input type="email" required name="correo" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Fecha de Nacimiento</label>
+                        <input type="date" required name="fecha_de_nacimiento" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Contraseña</label>
+                        <input type="password" required name="hash" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Materia</label>
+                        <input type="text" name="materia" id="">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Crear</button>
+                </form>
+
+                <script>
+                    const DocenteForm = document.getElementById('createDocenteForm');
+                    DocenteForm.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        const formData = new FormData(DocenteForm);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        /* console.log(jsonData); */
+
+                        crearDocente(jsonData);
+                    });
+                </script>
+
+            </div>
+
+
+            <div id="editDocente" style="margin-left: 300px;" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Editar Docente</h2>
+                <form id="editDocenteForm">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" name="nombre" id="">
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido</label>
+                        <input type="text" name="apellido" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Cedula</label>
+                        <input type="text" name="cedula" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Correo</label>
+                        <input type="email" name="correo" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Fecha de Nacimiento</label>
+                        <input type="date" required name="fecha_de_nacimiento" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Materia</label>
+                        <input type="text" name="materia" id="">
+                    </div>
+                    <div class="form-group">
+                        <input type="hidden" name="id" id="id_edit_docente">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar</button>
+                </form>
+
+                <script>
+                    const DocenteEdit = document.getElementById('editDocenteForm');
+                    DocenteEdit.addEventListener('submit', function (e) {
+
+                        const id = document.getElementById('id_edit_docente').value;
+
+                        e.preventDefault();
+                        const formData = new FormData(DocenteEdit);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        /* console.log(jsonData); */
+
+                        actualizarDocente(jsonData, id);
+                    });
+                </script>
+
+            </div>
+
+            <div id="inscripciones" class="view-section">
+                <h2>Inscripciones de Estudiantes</h2>
+                <button onclick="showSection('formIncripcion');" class="btn btn-primary">+ Crear</button>
+                <table id="tabla_inscripciones">
+                    <thead>
+                        <tr>
+                            <th>Cedula</th>
+                            <th>Nombre</th>
+                            <th>Seccion</th>
+                            <th>Fecha de Inscripcion</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo_inscripciones">
+                    </tbody>
+                </table>
+            </div>
+
+
+
+            <div id="formIncripcion" style="margin-left: 300px;" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Crear Inscripcion</h2>
+                <form id="createInscripcionForm">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" required name="nombre" id="">
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido</label>
+                        <input type="text" required name="apellido" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Cedula</label>
+                        <input type="text" pattern="[0-9]{7,8}" inputmode="numeric" minlength="7" maxlength="8" title="debe ingresar entre 7 y 8 digitos" required name="cedula" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Correo</label>
+                        <input type="email" required name="correo" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Fecha de Nacimiento</label>
+                        <input type="date" required name="fecha_de_nacimiento" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Contraseña</label>
+                        <input type="password" required name="hash" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Fecha de Inscripcion</label>
+                        <input type="date" required name="fecha_de_inscripcion" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Seccion</label>
+                        <input type="text" required name="seccion" id="">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Crear</button>
+                </form>
+
+                <script>
+                    const InscripcionForm = document.getElementById('createInscripcionForm');
+                    InscripcionForm.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        const formData = new FormData(InscripcionForm);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        /* console.log(jsonData); */
+
+                        crearInscripcion(jsonData);
+                    });
+                </script>
+
+            </div>
+
+
+
+
+            <div id="horarios" class="view-section">
+                <h2>Horarios</h2>
+                <button onclick="showSection('formHorario');" class="btn btn-primary">+ Crear</button>
+                <table id="tabla_horarios">
+                    <thead>
+                        <tr>
+                            <th>Materia</th>
+                            <th>Docente</th>
+                            <th>Periodo</th>
+                            <th>Dias</th>
+                            <th>Entrada</th>
+                            <th>Salida</th>
+                            <th>Aula</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo_horarios">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="formHorario" style="margin-left: 300px;" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Crear Horario</h2>
+                <form id="createHorarioForm">
+                    <div class="form-group">
+                        <label>Codigo de Materia</label>
+                        <input type="text" name="codigo_materia" required id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Cedula del Docente</label>
+                        <input type="text" name="docente_cedula" required id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Año de Periodo</label>
+                        <input type="number" min="1970" max="2100" required name="periodos_año" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">numero_de_periodo</label>
+                        <input type="text" name="periodos_numero" required id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Dia de la Semana</label>
+                        <input type="text" name="dia" required id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Hora de Inicio</label>
+                        <input type="time" step="1" name="hora_de_inicio" required id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Hora de Cierre</label>
+                        <input type="time" step="1" name="hora_de_cierre" required id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Aula</label>
+                        <input type="text" name="aula" required id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Seccion</label>
+                        <input type="text" name="seccions" required id="">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Crear</button>
+                </form>
+
+                <script>
+                    const HorarioForm = document.getElementById('createHorarioForm');
+                    HorarioForm.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        const formData = new FormData(HorarioForm);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        /* console.log(jsonData); */
+
+                        crearHorario(jsonData);
+                    });
+                </script>
+
+            </div>
+
+            <div id="editHorario" style="margin-left: 300px;" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Editar Horario</h2>
+                <form id="editHorarioForm">
+                    <div class="form-group">
+                        <label>Codigo de Materia</label>
+                        <input type="text" name="codigo_materia" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Cedula del Docente</label>
+                        <input type="text" name="docente_cedula" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Año de Periodo</label>
+                        <input type="number" min="1970" max="2100" name="periodos_año" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">numero_de_periodo</label>
+                        <input type="text" name="periodos_numero" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Dia de la Semana</label>
+                        <input type="text" name="dia" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Hora de Inicio</label>
+                        <input type="time" step="1" name="hora_de_inicio" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Hora de Cierre</label>
+                        <input type="time" step="1" name="hora_de_cierre" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Aula</label>
+                        <input type="text" name="aula" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Seccion</label>
+                        <input type="text" name="seccions" id="">
+                        <input type="hidden" id="id_edit_horario">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Crear</button>
+                </form>
+
+                <script>
+                    const HorarioEdit = document.getElementById('createHorarioForm');
+                    HorarioEdit.addEventListener('submit', function (e) {
+                        e.preventDefault();
+
+                        const id = document.getElementById('id_edit_horario');
+
+                        const formData = new FormData(HorarioEdit);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        /* console.log(jsonData); */
+
+                        actualizarHorario(jsonData, id);
+                    });
+                </script>
+
+            </div>
+
+            <div id="materias" class="view-section">
+                <h2>Materias</h2>
+                <button onclick="showSection('formMateria');" class="btn btn-primary">+ Crear</button>
+                <table id="tabla_materias">
+                    <thead>
+                        <tr>
+                            <th>Codigo</th>
+                            <th>Materia</th>
+                            <th>Descripcion</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo_materias">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="formMateria" style="margin-left: 300px;" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Crear Materia</h2>
+                <form id="createMateriaForm">
+                    <div class="form-group">
+                        <label>Codigo de Materia</label>
+                        <input type="text" required name="codigo_materia" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Nombre de Materia</label>
+                        <input type="text" name="nombre_materia" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Descripcion</label>
+                        <input type="text" name="descripcion" id="">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Crear</button>
+                </form>
+
+                <script>
+                    const MateriaForm = document.getElementById('createMateriaForm');
+                    MateriaForm.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        const formData = new FormData(MateriaForm);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        /* console.log(jsonData); */
+
+                        crearMateria(jsonData);
+                    });
+                </script>
+
+            </div>
+
+            <div id="editMateria" style="margin-left: 300px;" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Editar Materia</h2>
+                <form id="editMateriaForm">
+                    <div class="form-group">
+                        <label>Codigo de Materia</label>
+                        <input type="text" required name="codigo_materia" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Nombre de Materia</label>
+                        <input type="text" name="nombre_materia" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Descripcion</label>
+                        <input type="text" name="descripcion" id="">
+                        <input type="hidden" name="id" id="id_edit_materia">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar</button>
+                </form>
+
+                <script>
+                    const MateriaEdit = document.getElementById('editMateriaForm');
+                    MateriaEdit.addEventListener('submit', function (e) {
+                        e.preventDefault();
+
+                        const id_edit_materia = document.getElementById('id_edit_materia').value;
+
+                        const formData = new FormData(MateriaEdit);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        /* console.log(jsonData); */
+
+                        actualizarMateria(jsonData, id_edit_materia);
+                    });
+                </script>
+
+            </div>
+
+
+
+            <div id="notas" class="view-section">
+                <h2>Notas</h2>
+                <button onclick="showSection('formNota')" class="btn btn-primary">+ Cargar</button>
+                <button onclick="showSection('formBoletin')" id="botonBoletin" class="btn btn-primary">Cargar
+                    Boletin</button>
+                <table id="tabla_notas">
+                    <thead>
+                        <tr>
+                            <th>Materia</th>
+                            <th>Codigo</th>
+                            <th>Año</th>
+                            <th>Periodo</th>
+                            <th>Nota</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo_notas">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="formNota" style="margin-left: 300px;" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Cargar Nota</h2>
+                <form id="createNotaForm">
+                    <div class="form-group">
+                        <label>Cedula Estudiante</label>
+                        <input type="number" name="cedula" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Año de Periodo</label>
+                        <input type="number" required min="1970" max="2100" name="periodo_año" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Numero de Periodo</label>
+                        <input type="number" required min="1" max="2" name="periodo_numero" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Nombre de Materia</label>
+                        <input type="text" required name="materia" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Valor</label>
+                        <input type="number" name="valor" id="">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Registrar</button>
+                </form>
+
+                <script>
+                    const NotaForm = document.getElementById('createNotaForm');
+                    NotaForm.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        const formData = new FormData(NotaForm);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        /* console.log(jsonData); */
+
+                        crearNota(jsonData);
+                    });
+                </script>
+
+            </div>
+
+            <div id="formBoletin" style="margin-left: 300px;" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Cargar Boletin</h2>
+                <form id="searchBoletinForm">
+                    <div class="form-group">
+                        <input type="hidden" name="cedula" id="cedula_boletin">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Año de Periodo</label>
+                        <input type="number" required min="1970" max="2100" name="año" id="">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Crear</button>
+                </form>
+
+                <script>
+                    const boletinForm = document.getElementById('searchBoletinForm');
+                    boletinForm.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        const formData = new FormData(boletinForm);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        /* console.log(jsonData); */
+
+                        cargarBoletin(jsonData);
+                    });
+                </script>
+
+            </div>
+
+            <div id="editNota" style="margin-left: 300px;" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Editar Nota</h2>
+                <form id="editNotaForm">
+                    <div class="form-group">
+                        <label for="">Valor</label>
+                        <input type="number" min="1" max="20" name="valor" required id="">
+                        <input type="hidden" name="id" id="id_edit_nota">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar</button>
+                </form>
+
+                <script>
+                    const NotaEdit = document.getElementById('editNotaForm');
+                    NotaEdit.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        const id_edit_nota = document.getElementById('id_edit_nota').value;
+
+                        const formData = new FormData(NotaEdit);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        console.log(jsonData);
+
+                        actualizarNota(jsonData, id_edit_nota);
+                    });
+                </script>
+
+            </div>
+
+
+            <div id="boletin" class="view-section">
+                <h2>Boletin Informativo</h2>
+                <table id="tabla_Boletin">
+                    <thead>
+                        <tr>
+                            <th id="thBoletinMateria">Codigo</th>
+                            <th id="thBoletinMateria">Materia</th>
+                            <th id="thBoletinNota">Nota</th>
+                            <th></th>
+
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo_Boletin">
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>Firma del Directivo</th>
+                            <th>Firma del Coordinador</th>
+                            <th>Estudiante:</th>
+                            <th>Cedula:</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th id="pie_Estudiante"></th>
+                            <th id="pie_Cedula"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+
+
+        </main>
+    </div>
+
+
+    <script>
+        function showSection(id) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+
+            switch (id) {
+
+                case 'perfil':
+                    renderizarDashboard();
+                    break;
+
+                case 'materias':
+                    obtenerMateriasEstudiante();
+                    break;
+
+                case 'estudiantes':
+                    obtenerEstudiantes();
+                    break;
+
+                case 'docentes':
+                    obtenerDocentes();
+                    break;
+
+                case 'formBoletin':
+                    document.getElementById('cedula_boletin').value = document.getElementById('botonBoletin').value;
+                    break;
+
+                case 'inscripciones':
+                    obtenerInscripciones();
+                    break;
+
+                case 'horarios':
+                    obtenerHorarios();
+                    break;
+
+                case 'periodos':
+                    obtenerPeriodos();
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+
+    </script>
+</body>
+
+</html>
