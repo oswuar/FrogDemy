@@ -160,7 +160,7 @@ nav > div:last-child {
 }
 
 .hero {
-    background: linear-gradient(rgba(232, 245, 233, 0.7), rgba(251, 251, 251, 0.164)), url('/img/0.webp');
+    background: linear-gradient(rgba(232, 245, 233, 0.7), rgba(251, 251, 251, 0.164)), url('/Sistema/img/0.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -735,7 +735,7 @@ td {
 
 /* --- Fondo con overlay (login) --- */
 body.bg-login {
-    background: linear-gradient(rgba(232, 245, 233, 0.7), rgba(165, 214, 167, 0)), url('/img/0.webp');
+    background: linear-gradient(rgba(232, 245, 233, 0.7), rgba(165, 214, 167, 0)), url('/Sistema/img/0.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -857,7 +857,7 @@ body.bg-login {
 
 /* Call to action */
 .call-to-action {
-    background: linear-gradient(rgba(63, 134, 67, 0.456), rgba(76, 175, 79, 0.159)), url('/img/6.webp');
+    background: linear-gradient(rgba(63, 134, 67, 0.456), rgba(76, 175, 79, 0.159)), url('/Sistema/img/6.webp');
     background-size: cover;
     background-position: center 28%;
     background-repeat: no-repeat;
