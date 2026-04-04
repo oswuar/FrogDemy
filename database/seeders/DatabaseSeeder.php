@@ -28,26 +28,26 @@ class DatabaseSeeder extends Seeder
         );
 
         // Create test users if they don't exist
-        if (!Usuario::where('correo', 'cesar@gmail.com')->exists()) {
+        if (!Usuario::where('correo', 'oswuar@gmail.com')->exists()) {
             Usuario::create([
-                "nombre" => "cesar",
-                "apellido" => "clemente",
-                "cedula" => 24445552,
-                "correo" => 'cesar@gmail.com',
-                "fecha_de_nacimiento" => "1992-12-10",
+                "nombre" => "oswuar",
+                "apellido" => "blanco",
+                "cedula" => 31855836,
+                "correo" => 'oswuar@gmail.com',
+                "fecha_de_nacimiento" => "2006-09-23",
                 "hash" => "cesar",
                 "role_id" => 3
             ])->perfil()->create();
         }
 
-        if (!Usuario::where('correo', 'luis@gmail.com')->exists()) {
+        if (!Usuario::where('correo', 'daniel@gmail.com')->exists()) {
             Usuario::create([
-                "nombre" => "luis",
-                "apellido" => "chacon",
+                "nombre" => "daniel",
+                "apellido" => "pacheco",
                 "cedula" => 12225488,
-                "correo" => 'luis@gmail.com',
+                "correo" => 'daniel@gmail.com',
                 "fecha_de_nacimiento" => "1950-12-10",
-                "hash" => "luis",
+                "hash" => "daniel",
                 "role_id" => 2
             ])->perfil()->create(["materia_id" => 1]);
         }
