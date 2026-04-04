@@ -16,45 +16,41 @@
             <div class="logo" style="margin-bottom: 10px;">Panel Administrativo</div>
             <small id="userNameDisplay" style="color: var(--accent); margin-bottom: 20px;">Cargando...</small>
 
-            <button onclick="showSection('inicio')">Inicio</button>
             <button onclick="showSection('perfil')">Perfil</button>
             <button onclick="showSection('periodos')">Periodos</button>
             <button onclick="showSection('estudiantes')">Gestionar Estudiantes</button>
             <button onclick="showSection('docentes')">Gestionar Docentes</button>
             <button onclick="showSection('horarios')">Horarios</button>
             <button onclick="showSection('materias')">Materias</button>
-            <button onclick="showSection('inscripciones')">Gestionar Inscripciones</button>
-            <button onclick="showSection('ayuda')">Ayuda</button>
+            <button onclick="showSection('inscripciones')">Inscripciones</button>
             <button onclick="logout()" style="margin-top: auto; color: var(--danger);">Cerrar Sesión</button>
         </aside>
 
         <main class="main-content">
 
+            <div id="perfil" class="view-section active">
+                <h1 id="DashboardInicio">Dashboard</h1>
 
-            <div id="inicio" class="view-section active">
-                <h2>Inicio</h2>
-            </div>
+                <!-- Cabecera con avatar y rol -->
+                <div class="perfil-header">
+                    <div class="avatar-container">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="avatar-svg">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div class="rol-info">
+                            <span class="rol-label">Rol</span>
+                            <span class="rol-value" id="userRolDisplay">Cargando...</span>
+                        </div>
+                </div>
 
-            <div id="ayuda" class="view-section">
-                <h2>Ayuda</h2>
-                <h3>Manual de Usuario para Docentes</h3>
-            </div>
+                <!-- Lista hormiga -->
+                <div class="ant-list" id="cuerpo_dashboard">
 
-            <div id="perfil" class="view-section">
-                <h2>Dashboard</h2>
-                <table id="tabla_dashboard">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Apellido</th>
-                            <th>Cedula</th>
-                            <th>Fecha de Nacimiento</th>
-                            <th>Correo</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cuerpo_dashboard">
-                    </tbody>
-                </table>
+                </div>
+                </div>
+
             </div>
 
             <div id="periodos" class="view-section ">
@@ -107,6 +103,7 @@
 
                         const jsonData = JSON.stringify(objectData);
 
+                        /* console.log(jsonData); */
 
                         crearPeriodo(jsonData);
                     });
@@ -152,6 +149,7 @@
 
                         const jsonData = JSON.stringify(objectData);
 
+                        /* console.log(jsonData); */
 
                         actualizarPeriodo(jsonData, id_edit_periodo);
                     });
@@ -249,6 +247,7 @@
 
                         const jsonData = JSON.stringify(objectData);
 
+                        /* console.log(jsonData); */
 
                         crearDocente(jsonData);
                     });
@@ -303,6 +302,7 @@
 
                         const jsonData = JSON.stringify(objectData);
 
+                        /* console.log(jsonData); */
 
                         actualizarDocente(jsonData, id);
                     });
@@ -377,6 +377,7 @@
 
                         const jsonData = JSON.stringify(objectData);
 
+                        /* console.log(jsonData); */
 
                         crearInscripcion(jsonData);
                     });
@@ -460,6 +461,7 @@
 
                         const jsonData = JSON.stringify(objectData);
 
+                        /* console.log(jsonData); */
 
                         crearHorario(jsonData);
                     });
@@ -523,6 +525,7 @@
 
                         const jsonData = JSON.stringify(objectData);
 
+                        /* console.log(jsonData); */
 
                         actualizarHorario(jsonData, id);
                     });
@@ -575,6 +578,7 @@
 
                         const jsonData = JSON.stringify(objectData);
 
+                        /* console.log(jsonData); */
 
                         crearMateria(jsonData);
                     });
@@ -614,6 +618,7 @@
 
                         const jsonData = JSON.stringify(objectData);
 
+                        /* console.log(jsonData); */
 
                         actualizarMateria(jsonData, id_edit_materia);
                     });
@@ -680,6 +685,7 @@
 
                         const jsonData = JSON.stringify(objectData);
 
+                        /* console.log(jsonData); */
 
                         crearNota(jsonData);
                     });
@@ -710,6 +716,7 @@
 
                         const jsonData = JSON.stringify(objectData);
 
+                        /* console.log(jsonData); */
 
                         cargarBoletin(jsonData);
                     });
@@ -830,7 +837,16 @@
             }
         }
 
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            showSection('perfil');
 
+            // Cargar el nombre del usuario en el sidebar desde sessionStorage
+            const usuarioData = JSON.parse(sessionStorage.getItem('usuarioData'));
+            if (usuarioData) {
+                document.getElementById('userNameDisplay').textContent = usuarioData.nombre + ' ' + usuarioData.apellido;
+            }
+        });
     </script>
 </body>
 

@@ -14,19 +14,17 @@
 <body>
     <div class="dashboard">
         <aside class="sidebar">
-            <div class="logo">Estudiante</div>
+            <div class="logo">Panel Estudiantil</div>
             <small id="userNameDisplay" style="color: var(--accent); margin-bottom: 20px;">Cargando...</small>
             <button onclick="showSection('perfil')">Perfil</button>
             <button onclick="showSection('notas')">Mis Notas</button>
-            <button onclick="showSection('ayuda')">Ayuda</button>
             <button onclick="logout()" style="margin-top: auto; color: var(--danger);">Cerrar Sesión</button>
         </aside>
 
         <main class="main-content">
             <div id="perfil" class="view-section active">
                 <h1 id="DashboardInicio">Dashboard</h1>
-                 <!-- Sección Perfil -->
-                <!-- Cabecera con avatar y rol -->
+
                 <div class="perfil-header">
                     <div class="avatar-container">
                         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="avatar-svg">
@@ -40,9 +38,8 @@
                         </div>
                 </div>
 
-                <!-- Lista hormiga con los datos del perfil -->
                 <div class="ant-list" id="cuerpo_dashboard">
-                    <!-- Los items se generan dinámicamente con JavaScript -->
+
                 </div>
                 </div>
 
@@ -65,10 +62,6 @@
                 </table>
             </div>
 
-            <div id="ayuda" class="view-section">
-                <h1 id="misCalificaciones">Estudiante</h1>
-                <h3 id="misCalificaciones">Manual de Usuario para Estudiantes</h1>
-            </div>
         </main>
 
         <script>
@@ -91,12 +84,9 @@
                 }
             }
 
-            // Inicializar al cargar la página
             document.addEventListener('DOMContentLoaded', function() {
-                // Mostrar la sección de perfil por defecto
                 showSection('perfil');
 
-                // Cargar el nombre del usuario en el sidebar desde sessionStorage
                 const usuarioData = JSON.parse(sessionStorage.getItem('usuarioData'));
                 if (usuarioData) {
                     document.getElementById('userNameDisplay').textContent = usuarioData.nombre + ' ' + usuarioData.apellido;

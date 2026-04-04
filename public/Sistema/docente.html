@@ -12,43 +12,37 @@
 <body>
     <div class="dashboard">
         <aside class="sidebar">
-            <div class="logo" style="margin-bottom: 10px;">Panel Docente</div>
+            <div class="logo" style="margin-bottom: 10px;">Panel de Docente</div>
             <small id="userNameDisplay" style="color: var(--accent); margin-bottom: 20px;">Cargando...</small>
 
-            <button onclick="showSection('inicio')">Inicio</button>
             <button onclick="showSection('perfil')">Perfil</button>
             <button onclick="showSection('estudiantes')">Gestionar Estudiantes</button>
-            <button onclick="showSection('ayuda')">Ayuda</button>
             <button onclick="logout()" style="margin-top: auto; color: var(--danger);">Cerrar Sesión</button>
         </aside>
 
         <main class="main-content">
 
+            <div id="perfil" class="view-section active">
+                <h1 id="DashboardInicio">Dashboard</h1>
 
-            <div id="inicio" class="view-section active">
-                <h2>Inicio</h2>
-            </div>
+                <div class="perfil-header">
+                    <div class="avatar-container">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="avatar-svg">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div class="rol-info">
+                            <span class="rol-label">Rol</span>
+                            <span class="rol-value" id="userRolDisplay">Cargando...</span>
+                        </div>
+                </div>
 
-            <div id="ayuda" class="view-section">
-                <h2>Ayuda</h2>
-                <h3>Manual de Usuario para Docentes</h3>
-            </div>
+                <div class="ant-list" id="cuerpo_dashboard">
 
-            <div id="perfil" class="view-section">
-                <h2>Dashboard</h2>
-                <table id="tabla_dashboard">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Apellido</th>
-                            <th>Cedula</th>
-                            <th>Edad</th>
-                            <th>Correo</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cuerpo_dashboard">
-                    </tbody>
-                </table>
+                </div>
+                </div>
+
             </div>
 
             <div id="estudiantes" class="view-section">
@@ -188,6 +182,14 @@
             }
         }
 
+        document.addEventListener('DOMContentLoaded', function() {
+            showSection('perfil');
+
+            const usuarioData = JSON.parse(sessionStorage.getItem('usuarioData'));
+            if (usuarioData) {
+                document.getElementById('userNameDisplay').textContent = usuarioData.nombre + ' ' + usuarioData.apellido;
+            }
+        });
 
     </script>
 </body>
