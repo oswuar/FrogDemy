@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Iniciar Sesión</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/Sistema/styles.css">
     <script>"notificacion.js"</script>
 </head>
 <body class="bg-login">
@@ -19,9 +19,9 @@
                     <label>Contraseña</label>
                     <input type="password" id="loginPass" placeholder="1234" required>
                 </div>
-                
+
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Ingresar</button>
-                
+
                 <div class="login-footer">
                     <a href="index.html">Volver</a>
                 </div>
@@ -31,14 +31,14 @@
 
 
 
-    <script src="notificacion.js"></script>
-    <script src="api.js"></script>
+    <script src="/Sistema/notificacion.js"></script>
+    <script src="/Sistema/api.js"></script>
     <script>
     document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const email = document.getElementById('loginEmail').value;
         const pass = document.getElementById('loginPass').value;
-        
+
         // Llamada a función real
         login(email, pass);
     });

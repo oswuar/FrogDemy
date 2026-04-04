@@ -1,59 +1,59 @@
 @font-face {
-    font-display: swap; 
+    font-display: swap;
     font-family: 'Inter';
     font-style: normal;
     font-weight: 400;
-    src: url('fonts/inter-v20-latin-regular.woff2') format('woff2'); 
+    src: url('/Sistema/fonts/inter-v20-latin-regular.woff2') format('woff2');
 }
 /* inter-300italic - latin */
 @font-face {
-    font-display: swap; 
+    font-display: swap;
     font-family: 'Inter';
     font-style: italic;
     font-weight: 300;
-    src: url('fonts/inter-v20-latin-300italic.woff2') format('woff2'); 
+    src: url('/Sistema/fonts/inter-v20-latin-300italic.woff2') format('woff2');
 }
 /* inter-600 - latin */
 @font-face {
-    font-display: swap; 
+    font-display: swap;
     font-family: 'Inter';
     font-style: normal;
     font-weight: 600;
-    src: url('fonts/inter-v20-latin-600.woff2') format('woff2'); 
+    src: url('/Sistema/fonts/inter-v20-latin-600.woff2') format('woff2');
 }
 /* inter-700 - latin */
 @font-face {
-    font-display: swap; 
+    font-display: swap;
     font-family: 'Inter';
     font-style: normal;
     font-weight: 700;
-    src: url('fonts/inter-v20-latin-700.woff2') format('woff2'); 
+    src: url('/Sistema/fonts/inter-v20-latin-700.woff2') format('woff2');
 }
 
 :root {
     /* PALETA "VERDE PROFESIONAL" (basada en style_verdoso.css) */
-    
+
     /* Fondos */
     --bg-black: #e8f5e9;       /* Verde muy claro (fondo general) */
     --bg-dark-gray: #ffffff;   /* Blanco para paneles y nav */
     --bg-light-gray: #c8e6c9;  /* Verde claro para hovers */
-    
+
     /* Textos */
     --text-white: #1e293b;     /* Gris oscuro (texto principal) */
     --text-gray: #64748b;      /* Gris medio (texto secundario) */
     --black-text: #000000;
-    
+
     /* Acentos verdes */
     --accent: #2E7D32;         /* Verde medio */
     --accent-hover: #1B5E20;   /* Verde oscuro */
     --accent-gradient: linear-gradient(to right, #2E7D32, #4CAF50); /* Gradiente verde */
     --soft-gradient: linear-gradient(135deg, #ffffff 0%, #f1f8e9 100%); /* Gradiente suave para tarjetas */
-    
+
     /* Estados */
-    --danger: #ef4444;         
-    --success: #10b981;        
-    --warning: #f59e0b;       
-    
+    --danger: #ef4444;
+    --success: #10b981;
+    --warning: #f59e0b;
+
     /* Borde sutil */
     --border-color: #cbd5e1;   /* Gris claro */
 }
@@ -70,7 +70,7 @@ body {
     color: var(--text-white);
     line-height: 1.6;
     font-size: 16px;
-    overflow-y: auto; 
+    overflow-y: auto;
     overflow-x: hidden;
 }
 
@@ -82,7 +82,7 @@ body {
     padding: 20px;
 }
 
-.center { 
+.center {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
     color: #1f2226;
@@ -103,25 +103,25 @@ body {
     gap: 8px;
 }
 
-.btn-primary { 
+.btn-primary {
     background: var(--accent-gradient);
     color: #ffffff;
     box-shadow: 0 4px 6px rgba(46, 125, 50, 0.2);
     text-decoration: none;
 }
-.btn-primary:hover { 
+.btn-primary:hover {
     background: var(--accent-hover);
     transform: translateY(-3px);
     box-shadow: 0 6px 12px rgba(27, 94, 32, 0.3);
 }
 
-.btn-danger { 
+.btn-danger {
     background-color: rgba(239, 68, 68, 0.1);
-    color: var(--danger); 
+    color: var(--danger);
     border: 1px solid var(--danger);
 }
-.btn-danger:hover { 
-    background-color: var(--danger); 
+.btn-danger:hover {
+    background-color: var(--danger);
     color: white;
 }
 
@@ -160,11 +160,11 @@ nav > div:last-child {
 }
 
 .hero {
-    background: linear-gradient(rgba(232, 245, 233, 0.7), rgba(251, 251, 251, 0.164)), url('/img/0.webp');
+    background: linear-gradient(rgba(232, 245, 233, 0.7), rgba(251, 251, 251, 0.164)), url('/Sistema/img/0.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-attachment: fixed; 
+    background-attachment: fixed;
     height: 60vh;
     display: flex;
     align-items: center;
@@ -187,7 +187,7 @@ footer {
     font-size: 0.85rem;
     border-top: 1px solid var(--border-color);
     background-color: var(--bg-dark-gray);
-    margin-top: auto; 
+    margin-top: auto;
     width: 100%;
 }
 
@@ -280,7 +280,7 @@ input:invalid:not(:placeholder-shown) {
 .login-footer a {
     color: #000;
     text-decoration: none;
-    font-weight: 600; 
+    font-weight: 600;
 }
 
 .login-footer a:hover {
@@ -735,7 +735,7 @@ td {
 
 /* --- Fondo con overlay (login) --- */
 body.bg-login {
-    background: linear-gradient(rgba(232, 245, 233, 0.7), rgba(165, 214, 167, 0)), url('/img/0.webp');
+    background: linear-gradient(rgba(232, 245, 233, 0.7), rgba(165, 214, 167, 0)), url('/Sistema/img/0.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -857,7 +857,7 @@ body.bg-login {
 
 /* Call to action */
 .call-to-action {
-    background: linear-gradient(rgba(63, 134, 67, 0.456), rgba(76, 175, 79, 0.159)), url('/img/6.webp');
+    background: linear-gradient(rgba(63, 134, 67, 0.456), rgba(76, 175, 79, 0.159)), url('/Sistema/img/6.webp');
     background-size: cover;
     background-position: center 28%;
     background-repeat: no-repeat;

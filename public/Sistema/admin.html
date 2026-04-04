@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel Administrativo</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="html2pdf.bundle.min.js"></script>
-    <script src="auth.js"></script>
-    <script src="api.js"></script>
+    <link rel="stylesheet" href="/Sistema/styles.css">
+    <script src="/Sistema/html2pdf.bundle.min.js"></script>
+    <script src="/Sistema/auth.js"></script>
+    <script src="/Sistema/api.js"></script>
 </head>
 
 <body>
@@ -107,7 +107,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
 
                         crearPeriodo(jsonData);
                     });
@@ -153,7 +152,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
 
                         actualizarPeriodo(jsonData, id_edit_periodo);
                     });
@@ -171,7 +169,7 @@
                         </svg>
                     </div>
                 </div>
-                
+
                     <!-- Contenedor del Buscador -->
                 <table id="tabla_estudiantes">
                     <thead>
@@ -251,7 +249,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
 
                         crearDocente(jsonData);
                     });
@@ -306,7 +303,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
 
                         actualizarDocente(jsonData, id);
                     });
@@ -381,7 +377,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
 
                         crearInscripcion(jsonData);
                     });
@@ -465,7 +460,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
 
                         crearHorario(jsonData);
                     });
@@ -529,7 +523,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
 
                         actualizarHorario(jsonData, id);
                     });
@@ -582,7 +575,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
 
                         crearMateria(jsonData);
                     });
@@ -622,7 +614,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
 
                         actualizarMateria(jsonData, id_edit_materia);
                     });
@@ -689,7 +680,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
 
                         crearNota(jsonData);
                     });
@@ -720,7 +710,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
 
                         cargarBoletin(jsonData);
                     });
