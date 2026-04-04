@@ -39,22 +39,22 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Usuario::create([
-            "nombre" => "cesar",
-            "apellido" => "clemente",
-            "cedula" => 24445552,
-            "correo" => 'cesar@gmail.com',
-            "fecha_de_nacimiento" => "1992-12-10",
-            "hash" => "cesar",
+            "nombre" => "oswuar",
+            "apellido" => "blanco",
+            "cedula" => 31855836,
+            "correo" => 'oswuar@gmail.com',
+            "fecha_de_nacimiento" => "2006-09-23",
+            "hash" => "oswuar",
             "role_id" => 3
         ])->perfil()->create();
 
         Usuario::create([
-            "nombre" => "luis",
-            "apellido" => "chacon",
+            "nombre" => "daniel",
+            "apellido" => "pacheco",
             "cedula" => 12225488,
-            "correo" => 'luis@gmail.com',
+            "correo" => 'daniel@gmail.com',
             "fecha_de_nacimiento" => "1950-12-10",
-            "hash" => "luis",
+            "hash" => "daniel",
             "role_id" => 2
         ])->perfil()->create(["materia_id" => 1]);
 
