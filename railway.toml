@@ -1,0 +1,5 @@
+[build]
+builder = "railpack"
+
+[build.railpack]
+phpVersion = "8.4"
