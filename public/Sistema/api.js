@@ -119,48 +119,50 @@ async function login(email, password) {
 
 async function renderizarDashboard() {
     const contenedor = document.getElementById('cuerpo_dashboard');
+    if (!contenedor) return;
+
     contenedor.innerHTML = '';
 
     try {
-        const { response, data } = await apiRequest('/usuario');
-        if (response.status === 200) {
-            const usuario = data.usuario;
+        const usuario = getCurrentUser();
 
-            // Actualizar rol en el header
-            const rolSpan = document.getElementById('userRolDisplay');
-            if (rolSpan) {
-                const rol = usuario.rol.charAt(0).toUpperCase() + usuario.rol.slice(1);
-                rolSpan.textContent = rol;
-            }
-
-            // Actualizar nombre en el sidebar
-            const nameDisplay = document.getElementById('userNameDisplay');
-            if (nameDisplay) {
-                nameDisplay.textContent = `${usuario.nombre} ${usuario.apellido}`;
-            }
-
-            const campos = [
-                { label: 'Nombre', valor: usuario.nombre },
-                { label: 'Apellido', valor: usuario.apellido },
-                { label: 'Cédula', valor: usuario.cedula },
-                { label: 'Fecha de nacimiento', valor: usuario.fecha_de_nacimiento },
-                { label: 'Correo', valor: usuario.correo }
-            ];
-
-            campos.forEach(campo => {
-                const item = document.createElement('div');
-                item.className = 'ant-item';
-                item.innerHTML = `
-                    <span class="ant-label">${campo.label}</span>
-                    <span class="ant-value">${campo.valor || '—'}</span>
-                `;
-                contenedor.appendChild(item);
-            });
-        } else {
-            notificar("Error", "Error al cargar el perfil", "error");
+        if (!usuario) {
+            notificar("Error", "No hay datos de usuario", "error");
+            return;
         }
+
+        // Actualizar rol en el header
+        const rolSpan = document.getElementById('userRolDisplay');
+        if (rolSpan) {
+            const rol = usuario.rol.charAt(0).toUpperCase() + usuario.rol.slice(1);
+            rolSpan.textContent = rol;
+        }
+
+        // Actualizar nombre en el sidebar
+        const nameDisplay = document.getElementById('userNameDisplay');
+        if (nameDisplay) {
+            nameDisplay.textContent = `Hola, ${usuario.nombre}`;
+        }
+
+        const campos = [
+            { label: 'Nombre', valor: usuario.nombre },
+            { label: 'ID', valor: usuario.id },
+            { label: 'Rol', valor: usuario.rol },
+            { label: 'Perfil ID', valor: usuario.id_rol_perfil || '—' }
+        ];
+
+        campos.forEach(campo => {
+            const item = document.createElement('div');
+            item.className = 'ant-item';
+            item.innerHTML = `
+                <span class="ant-label">${campo.label}</span>
+                <span class="ant-value">${campo.valor || '—'}</span>
+            `;
+            contenedor.appendChild(item);
+        });
     } catch (error) {
-        // Ya manejado
+        console.error('Error loading dashboard:', error);
+        notificar("Error", "Error al cargar el perfil", "error");
     }
 }
 

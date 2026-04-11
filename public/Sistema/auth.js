@@ -95,6 +95,11 @@ document.addEventListener("DOMContentLoaded", () => {
         displayElement.innerText = `Hola, ${usuario.nombre}`;
     }
 
+    // Load dashboard data if renderizarDashboard function exists
+    if (typeof renderizarDashboard === 'function') {
+        renderizarDashboard();
+    }
+
     /* const originalFetch = window.fetch;
 
     window.fetch = function(...args){
