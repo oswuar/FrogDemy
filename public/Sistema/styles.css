@@ -401,6 +401,7 @@ th {
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 700;
+    text-align: center;
 }
 
 td {
