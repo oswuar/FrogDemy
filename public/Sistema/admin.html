@@ -30,7 +30,7 @@
 
             <div id="perfil" class="view-section active">
                 <h1 id="DashboardInicio">Dashboard</h1>
-
+                
                 <!-- Cabecera con avatar y rol -->
                 <div class="perfil-header">
                     <div class="avatar-container">
@@ -44,13 +44,11 @@
                             <span class="rol-value" id="userRolDisplay">Cargando...</span>
                         </div>
                 </div>
-
+    
                 <!-- Lista hormiga -->
                 <div class="ant-list" id="cuerpo_dashboard">
 
                 </div>
-                </div>
-
             </div>
 
             <div id="periodos" class="view-section ">
@@ -71,7 +69,7 @@
                 </table>
             </div>
 
-            <div id="formPeriodo" style="margin-left: 300px;" class="login-box view-section">
+            <div id="formPeriodo" class="login-box view-section">
                 <h2 style="text-align: center; margin-bottom: 20px;">Crear Periodo</h2>
                 <form id="createPeriodoForm">
                     <div class="form-group">
@@ -103,8 +101,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
-
                         crearPeriodo(jsonData);
                     });
                 </script>
@@ -112,7 +108,7 @@
             </div>
 
 
-            <div id="editPeriodo" style="margin-left: 300px;" class="login-box view-section">
+            <div id="editPeriodo" class="login-box view-section">
                 <h2 style="text-align: center; margin-bottom: 20px;">Editar Periodo</h2>
                 <form id="editPeriodoForm">
                     <div class="form-group">
@@ -149,8 +145,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
-
                         actualizarPeriodo(jsonData, id_edit_periodo);
                     });
                 </script>
@@ -167,7 +161,7 @@
                         </svg>
                     </div>
                 </div>
-
+                
                     <!-- Contenedor del Buscador -->
                 <table id="tabla_estudiantes">
                     <thead>
@@ -203,7 +197,7 @@
                 </table>
             </div>
 
-            <div id="formDocente" style="margin-left: 300px;" class="login-box view-section">
+            <div id="formDocente" class="login-box view-section">
                 <h2 style="text-align: center; margin-bottom: 20px;">Crear Docente</h2>
                 <form id="createDocenteForm">
                     <div class="form-group">
@@ -247,8 +241,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
-
                         crearDocente(jsonData);
                     });
                 </script>
@@ -256,7 +248,7 @@
             </div>
 
 
-            <div id="editDocente" style="margin-left: 300px;" class="login-box view-section">
+            <div id="editDocente" class="login-box view-section">
                 <h2 style="text-align: center; margin-bottom: 20px;">Editar Docente</h2>
                 <form id="editDocenteForm">
                     <div class="form-group">
@@ -302,8 +294,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
-
                         actualizarDocente(jsonData, id);
                     });
                 </script>
@@ -329,7 +319,7 @@
 
 
 
-            <div id="formIncripcion" style="margin-left: 300px;" class="login-box view-section">
+            <div id="formIncripcion" class="login-box view-section">
                 <h2 style="text-align: center; margin-bottom: 20px;">Crear Inscripcion</h2>
                 <form id="createInscripcionForm">
                     <div class="form-group">
@@ -377,8 +367,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
-
                         crearInscripcion(jsonData);
                     });
                 </script>
@@ -409,7 +397,7 @@
                 </table>
             </div>
 
-            <div id="formHorario" style="margin-left: 300px;" class="login-box view-section">
+            <div id="formHorario" class="login-box view-section">
                 <h2 style="text-align: center; margin-bottom: 20px;">Crear Horario</h2>
                 <form id="createHorarioForm">
                     <div class="form-group">
@@ -461,15 +449,13 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
-
                         crearHorario(jsonData);
                     });
                 </script>
 
             </div>
 
-            <div id="editHorario" style="margin-left: 300px;" class="login-box view-section">
+            <div id="editHorario" class="login-box view-section">
                 <h2 style="text-align: center; margin-bottom: 20px;">Editar Horario</h2>
                 <form id="editHorarioForm">
                     <div class="form-group">
@@ -525,8 +511,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
-
                         actualizarHorario(jsonData, id);
                     });
                 </script>
@@ -550,7 +534,7 @@
                 </table>
             </div>
 
-            <div id="formMateria" style="margin-left: 300px;" class="login-box view-section">
+            <div id="formMateria" class="login-box view-section">
                 <h2 style="text-align: center; margin-bottom: 20px;">Crear Materia</h2>
                 <form id="createMateriaForm">
                     <div class="form-group">
@@ -578,15 +562,13 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
-
                         crearMateria(jsonData);
                     });
                 </script>
 
             </div>
 
-            <div id="editMateria" style="margin-left: 300px;" class="login-box view-section">
+            <div id="editMateria" class="login-box view-section">
                 <h2 style="text-align: center; margin-bottom: 20px;">Editar Materia</h2>
                 <form id="editMateriaForm">
                     <div class="form-group">
@@ -618,8 +600,6 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
-
                         actualizarMateria(jsonData, id_edit_materia);
                     });
                 </script>
@@ -649,7 +629,7 @@
                 </table>
             </div>
 
-            <div id="formNota" style="margin-left: 300px;" class="login-box view-section">
+            <div id="formNota" class="login-box view-section">
                 <h2 style="text-align: center; margin-bottom: 20px;">Cargar Nota</h2>
                 <form id="createNotaForm">
                     <div class="form-group">
@@ -685,15 +665,13 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
-
                         crearNota(jsonData);
                     });
                 </script>
 
             </div>
 
-            <div id="formBoletin" style="margin-left: 300px;" class="login-box view-section">
+            <div id="formBoletin" class="login-box view-section">
                 <h2 style="text-align: center; margin-bottom: 20px;">Cargar Boletin</h2>
                 <form id="searchBoletinForm">
                     <div class="form-group">
@@ -716,15 +694,13 @@
 
                         const jsonData = JSON.stringify(objectData);
 
-                        /* console.log(jsonData); */
-
                         cargarBoletin(jsonData);
                     });
                 </script>
 
             </div>
 
-            <div id="editNota" style="margin-left: 300px;" class="login-box view-section">
+            <div id="editNota" class="login-box view-section">
                 <h2 style="text-align: center; margin-bottom: 20px;">Editar Nota</h2>
                 <form id="editNotaForm">
                     <div class="form-group">
