@@ -539,6 +539,9 @@ td {
         visibility: visible;
     }
     table {
+        position: absolute;
+        left: 0;
+        top: 0;
         width: 100%;
         border: 1px solid black;
         color: black;
