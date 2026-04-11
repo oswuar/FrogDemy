@@ -208,6 +208,7 @@ footer {
     max-width: 400px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     border: none;
+    margin: 0 auto;  /* Center the form */
 }
 
 .login-box h2 {
@@ -220,10 +221,10 @@ footer {
     border-image: var(--accent-gradient);
     border-image-slice: 1;
     padding-bottom: 0.75rem;
-    display: inline-block;
-    width: auto;
-    margin-left: 50px;
-    margin-right: auto;
+    display: block;  /* Changed from inline-block */
+    width: 100%;     /* Full width */
+    margin-left: 0;  /* Remove the 50px left margin */
+    margin-right: 0;
 }
 
 .login-box p {
