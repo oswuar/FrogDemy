@@ -179,7 +179,56 @@
                 </table>
             </div>
 
+            <div id="editEstudiante" class="login-box view-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">Editar Estudiante</h2>
+                <form id="editEstudianteForm">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" name="nombre" id="">
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido</label>
+                        <input type="text" name="apellido" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Cedula</label>
+                        <input type="text" name="cedula" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Correo</label>
+                        <input type="email" name="correo" id="">
+                    </div>
+                    <div class="form-group">
+                        <label for="">Seccion</label>
+                        <input type="text" name="seccion" id="">
+                    </div>
+                    <div class="form-group">
+                        <input type="hidden" name="id" id="id_edit_estudiante">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar</button>
+                </form>
+
+                <script>
+                    const EstudianteEdit = document.getElementById('editEstudianteForm');
+                    EstudianteEdit.addEventListener('submit', function (e) {
+                        e.preventDefault();
+
+                        const id = document.getElementById('id_edit_estudiante').value;
+
+                        const formData = new FormData(EstudianteEdit);
+
+                        const objectData = Object.fromEntries(formData);
+
+                        const jsonData = JSON.stringify(objectData);
+
+                        actualizarEstudiante(jsonData, id);
+                    });
+                </script>
+
+            </div>
+
             <div id="docentes" class="view-section">
+
                 <h2>Docentes</h2>
                 <button onclick="showSection('formDocente')" class="btn btn-primary">+ Añadir Docente</button>
                 <table id="tabla_docentes">
@@ -499,11 +548,11 @@
                 </form>
 
                 <script>
-                    const HorarioEdit = document.getElementById('createHorarioForm');
+                    const HorarioEdit = document.getElementById('editHorarioForm');
                     HorarioEdit.addEventListener('submit', function (e) {
                         e.preventDefault();
 
-                        const id = document.getElementById('id_edit_horario');
+                        const id = document.getElementById('id_edit_horario').value;
 
                         const formData = new FormData(HorarioEdit);
 
