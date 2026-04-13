@@ -304,15 +304,14 @@ function renderizarTablaMaterias(materias, editable = false) {
         if (editable) {
             acciones = `
                 <td>
-                    <button value="${materia.id}" onclick="
-                        document.getElementById('id_edit_materia').value = this.value;
-                        showSection('editMateria');"
+                    <button value="${materia.id}" onclick="obtenerMateriaParaEditar(${materia.id})"
                         class="btn btn-primary">Editar
                     </button>
                     <button onclick="eliminarMateria(${materia.id});" class="btn btn-danger">Eliminar</button>
                 </td>
             `;
         }
+
 
         fila.innerHTML = `
             <td><span class="data">${materia.codigo_materia}</span></td>
@@ -323,6 +322,10 @@ function renderizarTablaMaterias(materias, editable = false) {
         tabla.appendChild(fila);
     });
 }
+
+
+
+
 
 async function crearMateria(form) {
     await crudAction('/materia', 'POST', form);
@@ -335,6 +338,27 @@ async function actualizarMateria(form, id) {
 async function eliminarMateria(id) {
     await crudAction('/materia', 'DELETE', null, id);
 }
+
+async function obtenerMateriaParaEditar(id) {
+    try {
+        const { response, data } = await apiRequest(`/materia/${id}`);
+        if (response.status === 200) {
+            document.getElementById('id_edit_materia').value = id;
+            if (data.materia) {
+                const m = data.materia;
+                const form = document.getElementById('editMateriaForm');
+                if (form.codigo_materia) form.codigo_materia.value = m.codigo_materia || '';
+                if (form.nombre_materia) form.nombre_materia.value = m.nombre_materia || '';
+                if (form.descripcion) form.descripcion.value = m.descripcion || '';
+            }
+            showSection('editMateria');
+        }
+    } catch (error) {
+        notificar("Error", "No se pudo cargar la materia", "error");
+    }
+}
+
+
 
 // ========================
 // Horarios
@@ -362,9 +386,7 @@ function renderizarTablaHorarios(horarios, editable = false) {
         if (editable) {
             acciones = `
                 <td>
-                    <button value="${horario.id}" onclick="
-                        document.getElementById('id_edit_horario').value = this.value;
-                        showSection('editHorario');"
+                    <button value="${horario.id}" onclick="obtenerHorarioParaEditar(${horario.id})"
                         class="btn btn-primary">Editar
                     </button>
                     <button onclick="eliminarHorario(${horario.id});" class="btn btn-danger">Eliminar</button>
@@ -374,6 +396,7 @@ function renderizarTablaHorarios(horarios, editable = false) {
 
         fila.innerHTML = `
             <td><span class="data">${horario.nombre_materia}</span></td>
+
             <td>
                 <span class="data">${horario.nombre}</span>
                 <span class="data">${horario.apellido}</span>
@@ -401,6 +424,34 @@ async function eliminarHorario(id) {
     await crudAction('/horario', 'DELETE', null, id);
 }
 
+async function obtenerHorarioParaEditar(id) {
+
+    try {
+        const { response, data } = await apiRequest(`/horario/${id}`);
+        if (response.status === 200) {
+            document.getElementById('id_edit_horario').value = id;
+            if (data.horario) {
+                const h = data.horario;
+                const form = document.getElementById('editHorarioForm');
+                if (form.codigo_materia) form.codigo_materia.value = h.codigo_materia || '';
+                if (form.docente_cedula) form.docente_cedula.value = h.docente_cedula || '';
+                if (form.periodos_año) form.periodos_año.value = h.año || '';
+                if (form.periodos_numero) form.periodos_numero.value = h.numero_de_periodo || '';
+                if (form.dia) form.dia.value = h.dia || '';
+                if (form.hora_de_inicio) form.hora_de_inicio.value = h.hora_de_inicio || '';
+                if (form.hora_de_cierre) form.hora_de_cierre.value = h.hora_de_cierre || '';
+                if (form.aula) form.aula.value = h.aula || '';
+                if (form.seccions) form.seccions.value = h.seccions || '';
+            }
+            showSection('editHorario');
+        }
+    } catch (error) {
+        notificar("Error", "No se pudo cargar el horario", "error");
+    }
+}
+
+
+
 // ========================
 // Estudiantes
 // ========================
@@ -422,6 +473,7 @@ function renderizarTablaEstudiantes(estudiantes, esDocente) {
     tabla.innerHTML = '';
 
     estudiantes.forEach(estudiante => {
+
         const fila = document.createElement('tr');
         let acciones = '';
 
@@ -443,11 +495,9 @@ function renderizarTablaEstudiantes(estudiantes, esDocente) {
                         showSection('notas');
                         obtenerNotasEstudiante(${estudiante.id}, ${estudiante.cedula})" 
                         class="btn btn-primary">Notas</button>
-                    <button value="${estudiante.id}" onclick="
-                        document.getElementById('id_edit_estudiante').value = this.value;
-                        showSection('editEstudiante');" 
+                    <button value="${estudiante.id}" onclick="obtenerEstudianteParaEditar(${estudiante.id})" 
                         class="btn btn-primary">Editar</button>
-                    <button onclick="eliminarMateria(${estudiante.id});" class="btn btn-danger">Eliminar</button>
+                    <button onclick="eliminarEstudiante(${estudiante.id});" class="btn btn-danger">Eliminar</button>
                 </td>
             `;
         }
@@ -465,8 +515,47 @@ function renderizarTablaEstudiantes(estudiantes, esDocente) {
 }
 
 // ========================
+// Estudiantes CRUD
+// ========================
+async function crearEstudiante(form) {
+    await crudAction('/estudiante', 'POST', form);
+}
+
+async function actualizarEstudiante(form, id) {
+    await crudAction('/estudiante', 'PUT', form, id);
+}
+
+async function eliminarEstudiante(id) {
+    await crudAction('/estudiante', 'DELETE', null, id);
+}
+
+async function obtenerEstudianteParaEditar(id) {
+    try {
+        const { response, data } = await apiRequest(`/estudiante/${id}`);
+        if (response.status === 200) {
+            document.getElementById('id_edit_estudiante').value = id;
+            if (data.estudiante) {
+                const s = data.estudiante;
+                const form = document.getElementById('editEstudianteForm');
+                if (form.nombre) form.nombre.value = s.nombre || '';
+                if (form.apellido) form.apellido.value = s.apellido || '';
+                if (form.cedula) form.cedula.value = s.cedula || '';
+                if (form.correo) form.correo.value = s.correo || '';
+                if (form.seccion) form.seccion.value = s.seccion || '';
+            }
+            showSection('editEstudiante');
+        }
+    } catch (error) {
+        notificar("Error", "No se pudo cargar el estudiante", "error");
+    }
+}
+
+
+// ========================
 // Periodos
 // ========================
+
+
 async function obtenerPeriodos() {
     try {
         const { response, data } = await apiRequest('/periodo');
@@ -490,13 +579,12 @@ function renderizarTablaPeriodos(periodos) {
             <td><span class="data">${periodo.fecha_de_inicio}</span></td>
             <td><span class="data">${periodo.fecha_de_cierre}</span></td>
             <td>
-                <button value="${periodo.id}" onclick="
-                    document.getElementById('id_edit_periodo').value = this.value;
-                    showSection('editPeriodo');"
+                <button value="${periodo.id}" onclick="obtenerPeriodoParaEditar(${periodo.id})"
                     class="btn btn-primary">Editar</button>
                 <button onclick="eliminarPeriodo(${periodo.id});" class="btn btn-danger">Eliminar</button>
             </td>
         `;
+
         tabla.appendChild(fila);
     });
 }
@@ -511,6 +599,26 @@ async function actualizarPeriodo(form, id) {
 
 async function eliminarPeriodo(id) {
     await crudAction('/periodo', 'DELETE', null, id);
+}
+
+async function obtenerPeriodoParaEditar(id) {
+    try {
+        const { response, data } = await apiRequest(`/periodo/${id}`);
+        if (response.status === 200) {
+            document.getElementById('id_edit_periodo').value = id;
+            if (data.periodo) {
+                const p = data.periodo;
+                const form = document.getElementById('editPeriodoForm');
+                if (form.año) form.año.value = p.año || '';
+                if (form.numero_de_periodo) form.numero_de_periodo.value = p.numero_de_periodo || '';
+                if (form.fecha_de_inicio) form.fecha_de_inicio.value = p.fecha_de_inicio || '';
+                if (form.fecha_de_cierre) form.fecha_de_cierre.value = p.fecha_de_cierre || '';
+            }
+            showSection('editPeriodo');
+        }
+    } catch (error) {
+        notificar("Error", "No se pudo cargar el periodo", "error");
+    }
 }
 
 // ========================
@@ -539,9 +647,7 @@ function renderizarTablaDocentes(docentes) {
             <td><span class="data">${docente.apellido}</span></td>
             <td><span class="data">${docente.nombre_materia}</span></td>
             <td>
-                <button value="${docente.id}" onclick="
-                    document.getElementById('id_edit_docente').value = this.value;
-                    showSection('editDocente');"
+                <button value="${docente.id}" onclick="obtenerDocenteParaEditar(${docente.id})"
                     class="btn btn-primary">Editar</button>
                 <button onclick="eliminarDocente(${docente.id});" class="btn btn-danger">Eliminar</button>
             </td>
@@ -562,9 +668,34 @@ async function eliminarDocente(id) {
     await crudAction('/docente', 'DELETE', null, id);
 }
 
+
+async function obtenerDocenteParaEditar(id) {
+    try {
+        const { response, data } = await apiRequest(`/docente/${id}`);
+        if (response.status === 200) {
+            document.getElementById('id_edit_docente').value = id;
+            if (data.docente) {
+                const d = data.docente;
+                const form = document.getElementById('editDocenteForm');
+                if (form.nombre) form.nombre.value = d.nombre || '';
+                if (form.apellido) form.apellido.value = d.apellido || '';
+                if (form.cedula) form.cedula.value = d.cedula || '';
+                if (form.correo) form.correo.value = d.correo || '';
+                if (form.materia) form.materia.value = d.materia || '';
+                if (form.fecha_de_nacimiento) form.fecha_de_nacimiento.value = d.fecha_de_nacimiento || '';
+            }
+            showSection('editDocente');
+        }
+    } catch (error) {
+        notificar("Error", "No se pudo cargar el docente", "error");
+    }
+}
+
+
 // ========================
 // Boletín
 // ========================
+
 async function cargarBoletin(form) {
     try {
         const { response, data } = await apiRequest('/nota/final', {
@@ -675,7 +806,7 @@ async function crearInscripcion(form) {
 function filtrarBusqueda() {
     const input = document.getElementById('buscadorInput');
     const filtro = input.value.toUpperCase();
-    const tabla = document.getElementById("tabla_notas");
+    const tabla = document.getElementById("tabla_estudiantes");
     const filas = tabla.getElementsByTagName("tr");
 
     for (let i = 1; i < filas.length; i++) {
