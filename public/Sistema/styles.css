@@ -101,6 +101,8 @@ body {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .btn-primary {
@@ -390,8 +392,9 @@ table {
 
 th, td {
     padding: 16px;
-    text-align: left;
+    text-align: center;
     border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
 }
 
 th {
@@ -406,6 +409,7 @@ th {
 
 td {
     color: var(--text-white);
+    text-align: center;
 }
 
 .table-striped tbody tr:nth-child(even) {
@@ -413,6 +417,11 @@ td {
 }
 .table-striped tbody tr:hover {
     background-color: var(--bg-light-gray);
+}
+
+.data {
+    display: inline-block;
+    text-align: center;
 }
 
 .edit-input {
