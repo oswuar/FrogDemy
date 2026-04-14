@@ -1,244 +1,265 @@
 const API_URL = `${window.location.origin}/api`;
 
 
-function getToken() {
-    return sessionStorage.getItem('token');
-}
-
-// Obtener datos del usuario actual
-function getCurrentUser() {
-    const userData = sessionStorage.getItem('usuarioData');
-    return userData ? JSON.parse(userData) : null;
-}
-
-// Cliente HTTP centralizado
-async function apiRequest(endpoint, options = {}) {
-    const token = getToken();
-    const headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json' ,
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
-    };
-
+async function login(email, password) {
     try {
-        const response = await fetch(`${API_URL}${endpoint}`, {
-            ...options,
-            headers,
+        const response = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ correo: email, hash: password })
         });
 
         const data = await response.json();
 
-        // Manejo global de 401 (sesión expirada)
-        if (response.status === 401) {
-            usuario_no_autenticado(); // función global definida en otro lugar
-            throw new Error('Sesión expirada');
-        }
-
-        return { response, data };
-    } catch (error) {
-        console.error(`Error en ${endpoint}:`, error);
-        notificar("Atención", "No es posible conectar al servidor", "error");
-        throw error;
-    }
-}
-
-// CRUD 
-async function crudAction(endpoint, method, body = null, id = null) {
-    const url = id ? `${endpoint}/${id}` : endpoint;
-    const options = {
-        method,
-        ...(body && { body: JSON.stringify(body) }),
-    };
-
-    try {
-        const { response, data } = await apiRequest(url, options);
-
-        // Validación de errores (422, 404, 500, etc.)
-        if (response.status === 422) {
-            notificar("Error de validación", data.mensaje, "error");
-            return false;
-        }
-
-        if (response.status === 404) {
-            notificar("No encontrado", data.mensaje, "error");
-            return false;
-        }
-
-        if (response.status === 500) {
-            notificar("Error del servidor", data.mensaje || "Error interno", "error");
-            return false;
-        }
-
-        if (response.status === 201 || response.status === 200) {
-            notificar("Éxito", data.mensaje, "success");
-            // Recargar o redirigir según contexto
-            location.reload();
-            return true;
-        }
-
-        // Si no se reconoce el estado: mensaje genérico
-        if (!response.ok) {
-            notificar("Error", data.mensaje || "Error en la solicitud", "error");
-            return false;
-        }
-
-        return true;
-    } catch (error) {
-        // apiRequest
-        return false;
-    }
-}
-
-// ========================
-// autenticación y perfil
-// ========================
-async function login(email, password) {
-    try {
-        const { response, data } = await apiRequest('/login', {
-            method: 'POST',
-            body: JSON.stringify({ correo: email, hash: password })
-        });
-
         if (data.estatus === 200) {
+
             sessionStorage.setItem('token', data.token);
+
             sessionStorage.setItem('usuarioData', JSON.stringify(data.usuario));
 
-            notificar(data.mensaje, "", "success");
+            notificar('Autenticado.', data.mensaje, "success");
 
-            const rol = data.usuario.rol;
-            if (rol === 'administrativo') window.location.href = 'admin.html';
-            else if (rol === 'docente') window.location.href = 'docente.html';
-            else if (rol === 'estudiante') window.location.href = 'estudiante.html';
+            if (data.usuario.rol === 'administrativo') {
+                window.location.href = 'admin.html';
+            }
+            else if (data.usuario.rol === 'docente') {
+                window.location.href = 'docente.html';
+            }
+            else if (data.usuario.rol === 'estudiante') {
+                window.location.href = 'estudiante.html';
+            }
+
+            return;
+
+        } else if (data.estatus === 403) {
+
+            notificar('Cuenta inhabilitada', data.mensaje);
+            return;
+
         } else {
-            notificar("Error", data.mensaje, "error");
+            notificar("Error de Autenticacion", data.mensaje, "error");
+            console.error(data);
+            return;
         }
     } catch (error) {
-        // Ya se notifica en apiRequest
+        console.error("Error de conexión:", error);
+        notificar("Error", "No se pudo conectar con el servidor.", "error");
+        return;
     }
 }
+
 
 async function renderizarDashboard() {
-    const contenedor = document.getElementById('cuerpo_dashboard');
-    if (!contenedor) return;
 
-    contenedor.innerHTML = '';
-
+    const token = sessionStorage.getItem('token');
     try {
-        const usuario = getCurrentUser();
-
-        if (!usuario) {
-            notificar("Error", "No hay datos de usuario", "error");
-            return;
-        }
-
-        // Actualizar rol en el header
-        const rolSpan = document.getElementById('userRolDisplay');
-        if (rolSpan) {
-            const rol = usuario.rol.charAt(0).toUpperCase() + usuario.rol.slice(1);
-            rolSpan.textContent = rol;
-        }
-
-        // Actualizar nombre en el sidebar
-        const nameDisplay = document.getElementById('userNameDisplay');
-        if (nameDisplay) {
-            nameDisplay.textContent = `Hola, ${usuario.nombre}`;
-        }
-
-        const campos = [
-            { label: 'Nombre', valor: usuario.nombre },
-            { label: 'ID', valor: usuario.id },
-            { label: 'Rol', valor: usuario.rol },
-            { label: 'Perfil ID', valor: usuario.id_rol_perfil || '—' }
-        ];
-
-        campos.forEach(campo => {
-            const item = document.createElement('div');
-            item.className = 'ant-item';
-            item.innerHTML = `
-                <span class="ant-label">${campo.label}</span>
-                <span class="ant-value">${campo.valor || '—'}</span>
-            `;
-            contenedor.appendChild(item);
+        const response = await fetch(`${API_URL}/usuario`, {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
         });
+
+        const data = await response.json();
+
+        if (response.status === 200) {
+            const contenedor = document.getElementById('cuerpo_dashboard');
+
+            contenedor.innerHTML = '';
+
+            const usuario = data.usuario;
+
+
+            const rolSpan = document.getElementById('userRolDisplay');
+            if (rolSpan) {
+
+                const rol = JSON.parse(sessionStorage.getItem('usuarioData')).rol.charAt(0).toUpperCase() + JSON.parse(sessionStorage.getItem('usuarioData')).rol.slice(1);
+                rolSpan.textContent = rol;
+            }
+
+            const campos = [
+                { label: 'Nombre', valor: usuario.nombre },
+                { label: 'Apellido', valor: usuario.apellido },
+                { label: 'Cédula', valor: usuario.cedula },
+                { label: 'Fecha de nacimiento', valor: usuario.fecha_de_nacimiento },
+                { label: 'Correo', valor: usuario.correo },
+            ];
+
+            const nombre_rol = JSON.parse(sessionStorage.getItem('usuarioData')).rol;
+
+            const materia = JSON.parse(sessionStorage.getItem('usuarioData')).materia;
+
+            if (nombre_rol === "docente") {
+                const label_materia = { label: 'Materia', valor: materia };
+                campos.push(label_materia);
+            }
+
+            campos.forEach(campo => {
+                const item = document.createElement('div');
+                item.className = 'ant-item';
+
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'ant-label';
+                labelSpan.textContent = campo.label;
+
+                const valueSpan = document.createElement('span');
+                valueSpan.className = 'ant-value';
+                valueSpan.textContent = campo.valor || '—';
+
+                item.appendChild(labelSpan);
+                item.appendChild(valueSpan);
+                contenedor.appendChild(item);
+            });
+
+        } else {
+            notificar('Error', "Ocurrio un problema al cargar el perfil", "error");
+        }
+
     } catch (error) {
-        console.error('Error loading dashboard:', error);
-        notificar("Error", "Error al cargar el perfil", "error");
+        notificar('Error', "Error de conexion con el servidor", "error");
+        console.log(error);
+        return
     }
+
+
 }
 
-// ========================
-// Notas
-// ========================
+
+
 async function obtenerMisNotas() {
-    const usuario = getCurrentUser();
-    if (!usuario) return;
 
     try {
-        const { response, data } = await apiRequest(`/estudiante/${usuario.id_rol_perfil}`);
+
+        usuario = JSON.parse(sessionStorage.getItem('usuarioData'));
+
+        const response = await fetch(`${API_URL}/estudiante/${usuario.id_rol_perfil}`, {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + sessionStorage.getItem('token')
+            }
+        });
+
+        const data = await response.json();
+
         if (!data.notas) {
-            notificar("Aviso", data.mensaje, "info");
-            return;
+            console.log("estatus: " + data.estatus);
+            return notificar('Atencion!', data.mensaje);
         }
-        renderizarTablaNotas(data.notas, false);
+
+        const notas = data.notas;
+
+        renderizarTablaNotas(notas);
+
+        return;
+
     } catch (error) {
-        // Manejado
+
+        console.log(error);
+
+        notificar('Error', "Error de conexion con el servidor", "error");
+
+        return;
+
     }
+
+
 }
 
-async function obtenerNotasEstudiante(id, id_boton) {
-    const usuario = getCurrentUser();
+async function obtenerNotasEstudiante(id, cedula) {
+
+    const usuario = JSON.parse(sessionStorage.getItem('usuarioData'));
+
     try {
-        const { response, data } = await apiRequest(`/estudiante/${id}`);
+
+        const response = await fetch(`${API_URL}/estudiante/${id}`, {
+            headers: {
+                "Authorization": "Bearer " + sessionStorage.getItem('token')
+            }
+        });
+
+        const data = await response.json();
+
         if (!data.notas) {
-            notificar("Aviso", data.mensaje, "info");
+            notificar('Atencion!', data.mensaje);
+            console.log(data);
             return;
         }
-        if (usuario?.rol === 'administrativo') {
-            document.getElementById('botonBoletin').value = id_boton;
+
+        const notas = data.notas;
+
+        if (usuario.rol === 'administrativo') {
+            document.getElementById('botonBoletin').value = cedula;
         }
-        renderizarTablaNotas(data.notas, true);
-    } catch (error) { }
+
+        renderizarTablaNotasDocente(notas);
+
+    } catch (error) {
+
+        console.log(error);
+
+        notificar('Error', "Error de conexion con el servidor", "error");
+
+    }
+
+
 }
 
 async function obtenerNotasEstudiantePorMateria(id) {
-    const usuario = getCurrentUser();
+
+    const usuario = JSON.parse(sessionStorage.getItem('usuarioData'));
+
     try {
-        const { response, data } = await apiRequest('/estudiante-materia/' + id, {
+
+        const response = await fetch(`${API_URL}/estudiante-materia/${id}`, {
             method: "POST",
-            body: JSON.stringify({ materia: usuario?.materia })
+            headers: {
+                "Authorization": "Bearer " + sessionStorage.getItem('token'),
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ materia: usuario.materia })
         });
+
+        const data = await response.json();
+
         if (!data.notas) {
-            notificar("Aviso", data.mensaje, "info");
+            notificar('Atencion!', data.mensaje);
+            console.log(data);
             return;
         }
-        renderizarTablaNotas(data.notas, true);
-    } catch (error) { }
+
+        const notas = data.notas;
+
+        renderizarTablaNotasDocente(notas);
+
+    } catch (error) {
+
+        console.log(error);
+
+        notificar('Error', "Error de conexion con el servidor", "error");
+
+    }
+
+
 }
 
-function renderizarTablaNotas(notas, editable = false) {
+
+function renderizarTablaNotas(notas) {
     const tabla = document.getElementById('cuerpo_notas');
     tabla.innerHTML = '';
 
+    let color = '';
+
     notas.forEach(nota => {
         const fila = document.createElement('tr');
-        let color = '';
-        if (nota.valor > 10) color = 'var(--success)';
-        else if (nota.valor < 10) color = 'var(--danger)';
-        else color = 'var(--acent)';
+        fila.innerHTML = '';
 
-        let acciones = '';
-        if (editable) {
-            acciones = `
-                <td>
-                    <button value="${nota.id}" onclick="
-                        document.getElementById('id_edit_nota').value = this.value;
-                        showSection('editNota');"
-                        class="btn btn-primary">Editar
-                    </button>
-                    <button onclick="eliminarNota(${nota.id});" class="btn btn-danger">Eliminar</button>
-                </td>
-            `;
+        if (nota.valor > 3) {
+            color = 'style="color: var(--success)"';
+        }
+        else if (nota.valor < 3) {
+            color = 'style="color: var(--danger)"';
+        }
+        else {
+            color = 'style="color: var(--warning)"';
         }
 
         fila.innerHTML = `
@@ -246,158 +267,499 @@ function renderizarTablaNotas(notas, editable = false) {
             <td><span class="data">${nota.codigo_materia}</span></td>
             <td><span class="data">${nota.año}</span></td>
             <td><span class="data">${nota.numero_de_periodo}</span></td>
-            <td><span class="data" style="color: ${color}">${nota.valor}</span></td>
-            ${acciones}
+            <td><span class="data" ${color}>${nota.valor}</span></td>
         `;
+
+        tabla.appendChild(fila);
+    });
+}
+
+function renderizarTablaNotasDocente(notas) {
+    const tabla = document.getElementById('cuerpo_notas');
+    tabla.innerHTML = '';
+
+    let color = '';
+
+    notas.forEach(nota => {
+        const fila = document.createElement('tr');
+        fila.innerHTML = '';
+
+        if (nota.valor > 3) {
+            color = 'style="color: var(--success)"';
+        }
+        else if (nota.valor < 3) {
+            color = 'style="color: var(--danger)"';
+        }
+        else {
+            color = 'style="color: var(--warning)"';
+        }
+
+        fila.innerHTML = `
+            <td>${nota.nombre_materia}</td>
+            <td><span class="data">${nota.codigo_materia}</span></td>
+            <td><span class="data">${nota.año}</span></td>
+            <td><span class="data">${nota.numero_de_periodo}</span></td>
+            <td><span class="data" ${color}>${nota.valor}</span></td>
+            <td>
+                <button value="${nota.id}" onclick="
+                    document.getElementById('id_edit_nota').value = this.value; showSection('editNota');"
+                    class="btn btn-primary">Editar
+                </button>
+                <button onclick="eliminarNota(${nota.id}, this);" class="btn btn-danger">Eliminar</button>
+            </td>
+        `;
+
         tabla.appendChild(fila);
     });
 }
 
 async function crearNota(form) {
-    await crudAction('/nota', 'POST', form);
+    const token = sessionStorage.getItem('token');
+
+    try {
+
+        const response = await fetch(`${API_URL}/nota`, {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+            usuario_no_autenticado();
+            return;
+        }
+
+        if (response.status === 422) {
+            validarErrores('-notaForm', data.error);
+            return;
+        }
+
+        if (response.status === 500) {
+            notificar('Error', data.mensaje, "error");
+            return;
+        }
+
+        if (response.status === 201) {
+            notificar('Operacion exitosa!', data.mensaje, "success");
+            NotaForm.reset();
+            return;
+        }
+
+    } catch (error) {
+        notificar('Error', "No fue posible conectarse al servidor", "error");
+        console.error(error);
+        return;
+    }
 }
 
 async function actualizarNota(form, id) {
-    await crudAction('/nota', 'PUT', form, id);
-}
 
-async function eliminarNota(id) {
-    await crudAction('/nota', 'DELETE', null, id);
-}
+    const token = sessionStorage.getItem('token');
 
-// ========================
-// Materias
-// ========================
-async function obtenerMaterias() {
     try {
-        const { response, data } = await apiRequest('/materia');
-        if (!data.materias) {
-            notificar("Aviso", data.mensaje, "info");
+
+        const response = await fetch(`${API_URL}/nota/${id}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+            usuario_no_autenticado();
             return;
         }
-        renderizarTablaMaterias(data.materias, true);
-    } catch (error) { }
-}
 
-async function obtenerMateriasEstudiante() {
-    try {
-        const { response, data } = await apiRequest('/materia');
-        if (!data.materias) {
-            notificar("Aviso", data.mensaje, "info");
+        if (response.status === 422) {
+            validarErrores("-editNota", data.error);
             return;
         }
-        renderizarTablaMaterias(data.materias, true);
-    } catch (error) { }
-}
 
-function renderizarTablaMaterias(materias, editable = false) {
-    const tabla = document.getElementById('cuerpo_materias');
-    tabla.innerHTML = '';
-
-    materias.forEach(materia => {
-        const fila = document.createElement('tr');
-        let colDescripcion = '';
-        if (materia.descripcion) {
-            colDescripcion = `<td><span class="data">${materia.descripcion}</span></td>`;
+        if (response.status === 404) {
+            notificar('Atencion!', data.mensaje);
+            return;
         }
 
-        let acciones = '';
-        if (editable) {
-            acciones = `
-                <td>
-                    <button value="${materia.id}" onclick="obtenerMateriaParaEditar(${materia.id})"
-                        class="btn btn-primary">Editar
-                    </button>
-                    <button onclick="eliminarMateria(${materia.id});" class="btn btn-danger">Eliminar</button>
-                </td>
-            `;
+        if (response.status === 500) {
+            notificar('Error', data.mensaje, "error");
+            return;
         }
 
-
-        fila.innerHTML = `
-            <td><span class="data">${materia.codigo_materia}</span></td>
-            <td><span class="data">${materia.nombre_materia}</span></td>
-            ${colDescripcion}
-            ${acciones}
-        `;
-        tabla.appendChild(fila);
-    });
-}
-
-
-
-
-
-async function crearMateria(form) {
-    await crudAction('/materia', 'POST', form);
-}
-
-async function actualizarMateria(form, id) {
-    await crudAction('/materia', 'PUT', form, id);
-}
-
-async function eliminarMateria(id) {
-    await crudAction('/materia', 'DELETE', null, id);
-}
-
-async function obtenerMateriaParaEditar(id) {
-    try {
-        const { response, data } = await apiRequest(`/materia/${id}`);
         if (response.status === 200) {
-            document.getElementById('id_edit_materia').value = id;
-            if (data.materia) {
-                const m = data.materia;
-                const form = document.getElementById('editMateriaForm');
-                if (form.codigo_materia) form.codigo_materia.value = m.codigo_materia || '';
-                if (form.nombre_materia) form.nombre_materia.value = m.nombre_materia || '';
-                if (form.descripcion) form.descripcion.value = m.descripcion || '';
-            }
-            showSection('editMateria');
+            notificar("Operacion exitosa!", data.mensaje, "success");
+            NotaEdit.reset();
+            return;
         }
+
     } catch (error) {
-        notificar("Error", "No se pudo cargar la materia", "error");
+        notificar('Error', "Error de conexion con el servidor", "error");
+        console.error(error);
+    }
+
+
+}
+
+async function eliminarNota(id, boton) {
+    const token = sessionStorage.getItem('token');
+
+    try {
+        const response = await fetch(`${API_URL}/nota/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+        });
+
+        const data = await response.json();
+
+        if (data.estatus === 404) {
+            notificar('Atencion', data.mensaje);
+            return;
+        }
+
+        if (data.estatus === 500) {
+            notificar("Error", data.mensaje, "error");
+            return;
+        }
+
+        notificar("Operacion exitosa", data.mensaje, "success");
+
+        fila = boton.parentNode.parentNode;
+
+        fila.remove();
+
+        return;
+
+    } catch (error) {
+
+        alert("Error: no se pudo conetar con el servidor");
+        console.error("error del servidor " + error);
     }
 }
 
 
+async function obtenerMaterias() {
+    const token = sessionStorage.getItem('token');
 
-// ========================
-// Horarios
-// ========================
-async function obtenerHorarios() {
     try {
-        const { response, data } = await apiRequest('/horario');
-        if (!data.horarios) {
-            notificar("Aviso", data.mensaje, "info");
+        const response = await fetch(`${API_URL}/materia`, {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const materias = await response.json();
+
+        if (!materias.materias) {
+            notificar("Atencion!", materias.mensaje);
             return;
         }
-        const usuario = getCurrentUser();
-        const editable = usuario && (usuario.rol === 'administrativo');
-        renderizarTablaHorarios(data.horarios, editable);
-    } catch (error) { }
+
+        /* console.log(materias); */
+
+        renderizarTablaMaterias(materias.materias);
+
+        return;
+
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor.", "error");
+        return;
+    }
 }
 
-function renderizarTablaHorarios(horarios, editable = false) {
-    const tabla = document.getElementById('cuerpo_horarios');
+
+function renderizarTablaMaterias(materias) {
+
+    const tabla = document.getElementById('cuerpo_materias');
+
     tabla.innerHTML = '';
 
-    horarios.forEach(horario => {
+    materias.forEach(materia => {
         const fila = document.createElement('tr');
-        let acciones = '';
-        if (editable) {
-            acciones = `
-                <td>
-                    <button value="${horario.id}" onclick="obtenerHorarioParaEditar(${horario.id})"
-                        class="btn btn-primary">Editar
-                    </button>
-                    <button onclick="eliminarHorario(${horario.id});" class="btn btn-danger">Eliminar</button>
-                </td>
+        if (!materia.descripcion) {
+            fila.innerHTML = `
+            <td><span class="data">${materia.codigo_materia}</span></td>
+            <td><span class="data">${materia.nombre_materia}</span></td>
+            `;
+        } else {
+            fila.innerHTML = `
+            <td><span class="data">${materia.codigo_materia}</span></td>
+            <td><span class="data">${materia.nombre_materia}</span></td>
+            <td><span class="data">${materia.descripcion}</span></td>
             `;
         }
 
-        fila.innerHTML = `
-            <td><span class="data">${horario.nombre_materia}</span></td>
+        tabla.appendChild(fila);
+    });
 
+}
+
+async function obtenerMateriasEstudiante() {
+    const token = sessionStorage.getItem('token');
+
+    try {
+        const response = await fetch(`${API_URL}/materia`, {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const materias = await response.json();
+
+        if (!materias.materias) {
+            notificar("Atencion!", materias.mensaje);
+            return;
+        }
+
+        renderizarTablaMateriasDocente(materias.materias);
+
+        renderizarSelectMateria(materias.materias);
+
+    } catch (error) {
+        notificar("Error", "no fue posible conectarse al servidor", "error");
+        return;
+    }
+
+}
+
+function renderizarTablaMateriasDocente(materias) {
+
+    const tabla = document.getElementById('cuerpo_materias');
+
+    tabla.innerHTML = '';
+
+    materias.forEach(materia => {
+        const fila = document.createElement('tr');
+        if (!materia.descripcion) {
+            fila.innerHTML = `
+            <td><span class="data">${materia.codigo_materia}</span></td>
+            <td><span class="data">${materia.nombre_materia}</span></td>
+            <td></td>
+            <td>
+                <button value="${materia.id}" onclick="
+                    document.getElementById('id_edit_materia').value = this.value; showSection('editMateria');"
+                    class="btn btn-primary">Editar
+                </button>
+                <button onclick="eliminarMateria(${materia.id}, this);" class="btn btn-danger">Eliminar</button>
+            </td>
+            `;
+        } else {
+            fila.innerHTML = `
+            <td><span class="data">${materia.codigo_materia}</span></td>
+            <td><span class="data">${materia.nombre_materia}</span></td>
+            <td><span class="data">${materia.descripcion}</span></td>
+            <td>
+                <button value="${materia.id}" onclick="
+                    document.getElementById('id_edit_materia').value = this.value; showSection('editMateria');"
+                    class="btn btn-primary">Editar
+                </button>
+                <button onclick="eliminarMateria(${materia.id}, this);" class="btn btn-danger">Eliminar</button>
+            </td>
+            `;
+        }
+
+        tabla.appendChild(fila);
+    });
+
+}
+
+
+function renderizarSelectMateria(materias) {
+
+    const selects = document.querySelectorAll('.select_materia');
+
+
+    selects.forEach(select => {
+
+        select.innerHTML = '';
+
+        select.add(new Option('Seleccione...'));
+
+        materias.forEach(materia => {
+            const opcion = document.createElement('option');
+            opcion.value = materia.nombre_materia;
+            opcion.text = `${materia.nombre_materia}`;
+            select.appendChild(opcion);
+        });
+
+    });
+
+    return;
+
+}
+
+async function crearMateria(form) {
+    const token = sessionStorage.getItem('token');
+
+    try {
+
+        const response = await fetch(`${API_URL}/materia`, {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+            usuario_no_autenticado();
+            return;
+        }
+
+        if (response.status === 422) {
+            validarErrores("-materiaForm", data.error);
+            return;
+        }
+
+        if (response.status === 500) {
+            notificar("Error", data.mensaje, "error");
+            return;
+        }
+
+        if (response.status === 201) {
+            notificar("Operacion exitosa!", data.mensaje, "success");
+            MateriaForm.reset();
+            obtenerMateriasEstudiante();
+            return;
+        }
+
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor");
+        console.error(error);
+        return;
+    }
+
+}
+
+async function actualizarMateria(form, id) {
+    const token = sessionStorage.getItem('token');
+
+    try {
+
+        const response = await fetch(`${API_URL}/materia/${id}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+            usuario_no_autenticado();
+            return;
+        }
+
+        if (response.status === 422) {
+            validarErrores("-editMateria", data.error);
+            return;
+        }
+
+        if (response.status === 500) {
+            notificar("Error", data.mensaje, "error");
+            return;
+        }
+
+        if (response.status === 200) {
+            notificar("Operacion exitosa!", data.mensaje, "success");
+            MateriaEdit.reset();
+            obtenerMateriasEstudiante();
+            return;
+        }
+
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error(error);
+    }
+}
+
+async function eliminarMateria(id, boton) {
+    const token = sessionStorage.getItem('token');
+
+    try {
+        const response = await fetch(`${API_URL}/materia/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.estatus === 404) {
+            notificar("Atencion!", data.mensaje);
+            return;
+        }
+
+        if (data.estatus === 409) {
+            notificar("Error", data.mensaje);
+            return;
+        }
+
+        notificar("Operacion exitosa!", data.mensaje, "success");
+
+        fila = boton.parentNode.parentNode;
+
+        fila.remove();
+
+        obtenerMateriasEstudiante();
+
+        return;
+    } catch (error) {
+        alert("error de conexion con el servidor");
+        console.log(error);
+    }
+}
+
+async function obtenerHorarios() {
+    const token = sessionStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/horario`, {
+        headers: {
+            "Authorization": "Bearer " + token
+        }
+    });
+
+    const horarios = await response.json();
+
+    if (!horarios.horarios) {
+        notificar("Atencion!", horarios.mensaje);
+        return;
+    }
+
+    /* console.log(horarios); */
+
+    renderizarTablaHorarios(horarios.horarios);
+
+}
+
+function renderizarTablaHorarios(horarios) {
+    const tabla = document.getElementById('cuerpo_horarios');
+
+    tabla.innerHTML = '';
+
+    const usuario = JSON.parse(sessionStorage.getItem('usuarioData'));
+
+    if (usuario.rol === 'docente' | usuario.rol === 'estudiante') {
+        horarios.forEach(horario => {
+            const fila = document.createElement('tr');
+
+            fila.innerHTML = `
+            <td><span class="data">${horario.nombre_materia}</span></td>
             <td>
                 <span class="data">${horario.nombre}</span>
                 <span class="data">${horario.apellido}</span>
@@ -407,101 +769,232 @@ function renderizarTablaHorarios(horarios, editable = false) {
             <td><span class="data">${horario.hora_de_inicio}</span></td>
             <td><span class="data">${horario.hora_de_cierre}</span></td>
             <td><span class="data">${horario.aula}</span></td>
-            ${acciones}
+            `;
+
+            tabla.appendChild(fila);
+        });
+        return;
+    }
+
+    horarios.forEach(horario => {
+        const fila = document.createElement('tr');
+
+        fila.innerHTML = `
+        <td><span class="data">${horario.nombre_materia}</span></td>
+        <td>
+            <span class="data">${horario.nombre}</span>
+            <span class="data">${horario.apellido}</span>
+        </td>
+        <td><span class="data">${horario.año}-${horario.numero_de_periodo}</span></td>
+        <td><span class="data">${horario.dia}</span></td>
+        <td><span class="data">${horario.hora_de_inicio}</span></td>
+        <td><span class="data">${horario.hora_de_cierre}</span></td>
+        <td><span class="data">${horario.aula}</span></td>
+        <td>
+            <button value="${horario.id}" onclick="
+                document.getElementById('id_edit_horario').value = this.value; showSection('editHorario');"
+                class="btn btn-primary">Editar
+            </button>
+            <button onclick="eliminarHorario(${horario.id}, this);" class="btn btn-danger">Eliminar</button>
+        </td>
         `;
+
         tabla.appendChild(fila);
     });
+
+
 }
 
 async function crearHorario(form) {
-    await crudAction('/horario', 'POST', form);
+    const token = sessionStorage.getItem('token');
+
+    try {
+        const response = await fetch(`${API_URL}/horario`, {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+            usuario_no_autenticado();
+            return;
+        }
+
+        if (response.status === 422) {
+            validarErrores("-horarioForm", data.error);
+            return;
+        }
+
+        if (response.status === 500) {
+            notificar("Error", data.mensaje, "error");
+            return;
+        }
+
+        if (response.status === 201) {
+            notificar("Operacion exitosa!", data.mensaje, "success");
+            HorarioForm.reset();
+            return;
+        }
+
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error(error);
+        return;
+    }
 }
 
 async function actualizarHorario(form, id) {
-    await crudAction('/horario', 'PUT', form, id);
-}
 
-async function eliminarHorario(id) {
-    await crudAction('/horario', 'DELETE', null, id);
-}
-
-async function obtenerHorarioParaEditar(id) {
+    const token = sessionStorage.getItem('token');
 
     try {
-        const { response, data } = await apiRequest(`/horario/${id}`);
-        if (response.status === 200) {
-            document.getElementById('id_edit_horario').value = id;
-            if (data.horario) {
-                const h = data.horario;
-                const form = document.getElementById('editHorarioForm');
-                if (form.codigo_materia) form.codigo_materia.value = h.codigo_materia || '';
-                if (form.docente_cedula) form.docente_cedula.value = h.docente_cedula || '';
-                if (form.periodos_año) form.periodos_año.value = h.año || '';
-                if (form.periodos_numero) form.periodos_numero.value = h.numero_de_periodo || '';
-                if (form.dia) form.dia.value = h.dia || '';
-                if (form.hora_de_inicio) form.hora_de_inicio.value = h.hora_de_inicio || '';
-                if (form.hora_de_cierre) form.hora_de_cierre.value = h.hora_de_cierre || '';
-                if (form.aula) form.aula.value = h.aula || '';
-                if (form.seccions) form.seccions.value = h.seccions || '';
-            }
-            showSection('editHorario');
+
+        const response = await fetch(`${API_URL}/horario/${id}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+            usuario_no_autenticado();
+            return;
         }
+
+        if (response.status === 422) {
+            validarErrores("-editHorario")
+            return;
+        }
+
+        if (response.status === 500) {
+            notificar("Error", data.mensaje, "error");
+            return;
+        }
+
+        if (response.status === 200) {
+            notificar("Operacion exitosa!", data.mensaje, "success");
+            HorarioEdit.reset();
+            return;
+        }
+
     } catch (error) {
-        notificar("Error", "No se pudo cargar el horario", "error");
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error(error);
+        return;
+    }
+}
+
+
+async function eliminarHorario(id, boton) {
+    token = sessionStorage.getItem('token');
+
+    try {
+        const response = await fetch(`${API_URL}/periodo/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+        });
+
+        const data = await response.json();
+
+        if (data.estatus === 404) {
+            notificar("Atencion!", data.mensaje);
+            return;
+        }
+
+        notificar("Operacion exitosa!", data.mensaje, "success");
+
+        fila = boton.parentNode.parentNode;
+
+        fila.remove();
+
+        return;
+
+    } catch (error) {
+
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error("error de conexion con el servidor");
+        return;
     }
 }
 
 
 
-// ========================
-// Estudiantes
-// ========================
 async function obtenerEstudiantes() {
+    const token = sessionStorage.getItem('token');
+
     try {
-        const { response, data } = await apiRequest('/estudiante');
-        if (!data.estudiantes) {
-            notificar("Aviso", data.mensaje, "info");
+        const response = await fetch(`${API_URL}/estudiante`, {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+    
+        const estudiantes = await response.json();
+    
+        if (!estudiantes.estudiantes) {
+            notificar("Atencion!", estudiantes.mensaje);
             return;
         }
-        const usuario = getCurrentUser();
-        const esDocente = usuario?.rol === 'docente';
-        renderizarTablaEstudiantes(data.estudiantes, esDocente);
-    } catch (error) { }
+    
+        /* console.log(estudiantes.estudiantes); */
+    
+        renderizarTablaEstudiantes(estudiantes.estudiantes);
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error(error);
+        return;
+    }
+
 }
 
-function renderizarTablaEstudiantes(estudiantes, esDocente) {
+function renderizarTablaEstudiantes(estudiantes) {
     const tabla = document.getElementById('cuerpo_estudiantes');
+
     tabla.innerHTML = '';
 
+    const usuario = JSON.parse(sessionStorage.getItem('usuarioData'));
+
+    if (usuario.rol === 'docente') {
+
+        estudiantes.forEach(estudiante => {
+            const fila = document.createElement('tr');
+
+            fila.innerHTML = `
+                <td><span class="data">${estudiante.cedula}</span></td>
+                <td><span class="data">${estudiante.nombre}</span></td>
+                <td><span class="data">${estudiante.apellido}</span></td>
+                <td><span class="data">${estudiante.numero_de_matricula}</span></td>
+                <td><span class="data">${estudiante.año_de_ingreso}</span></td>
+                <td>
+                    <button value="${estudiante.cedula}" onclick="
+                        document.getElementById('cuerpo_notas').innerHTML = '';
+                        showSection('notas');
+                        document.getElementById('boton_crear_nota').value = ${estudiante.cedula};
+                        obtenerNotasEstudiantePorMateria(${estudiante.id})" class="btn btn-primary";
+                    >Notas</button>
+                </td>
+            `;
+
+            tabla.appendChild(fila);
+        });
+
+        return;
+
+    }
+
     estudiantes.forEach(estudiante => {
-
         const fila = document.createElement('tr');
-        let acciones = '';
-
-        if (esDocente) {
-            acciones = `
-                <td>
-                    <button value="${estudiante.cedula}" onclick="
-                        document.getElementById('cuerpo_notas').innerHTML = '';
-                        showSection('notas');
-                        obtenerNotasEstudiantePorMateria(${estudiante.id})" 
-                        class="btn btn-primary">Notas</button>
-                </td>
-            `;
-        } else {
-            acciones = `
-                <td>
-                    <button value="${estudiante.cedula}" onclick="
-                        document.getElementById('cuerpo_notas').innerHTML = '';
-                        showSection('notas');
-                        obtenerNotasEstudiante(${estudiante.id}, ${estudiante.cedula})" 
-                        class="btn btn-primary">Notas</button>
-                    <button value="${estudiante.id}" onclick="obtenerEstudianteParaEditar(${estudiante.id})" 
-                        class="btn btn-primary">Editar</button>
-                    <button onclick="eliminarEstudiante(${estudiante.id});" class="btn btn-danger">Eliminar</button>
-                </td>
-            `;
-        }
 
         fila.innerHTML = `
             <td><span class="data">${estudiante.cedula}</span></td>
@@ -509,80 +1002,284 @@ function renderizarTablaEstudiantes(estudiantes, esDocente) {
             <td><span class="data">${estudiante.apellido}</span></td>
             <td><span class="data">${estudiante.numero_de_matricula}</span></td>
             <td><span class="data">${estudiante.año_de_ingreso}</span></td>
-            ${acciones}
+            <td>
+                <button value="${estudiante.cedula}" onclick="
+                    document.getElementById('cuerpo_notas').innerHTML = '';
+                    showSection('notas');
+                    document.getElementById('boton_crear_nota').value = ${estudiante.cedula};
+                    obtenerNotasEstudiante(${estudiante.id}, ${estudiante.cedula})" class="btn btn-primary";
+                >Notas</button>
+                <button onclick="eliminarEstudiante(${estudiante.id}, this);" class="btn btn-danger">Bloquear</button>
+            </td>
         `;
+
         tabla.appendChild(fila);
+    });
+
+
+    return;
+}
+
+function filtrarBusqueda(buscador, tb) {
+    const input = document.getElementById(buscador);
+    const filtro = input.value.toUpperCase();
+    const tabla = document.getElementById(tb);
+    const filas = tabla.getElementsByTagName("tr");
+
+    
+    for (let i = 1; i < filas.length; i++) {
+        const celdas = filas[i].getElementsByTagName("td");
+        let coincide = false;
+
+
+        for (let j = 0; j < celdas.length; j++) {
+            if (celdas[j]) {
+                const texto = celdas[j].textContent || celdas[j].innerText;
+                if (texto.toUpperCase().indexOf(filtro) > -1) {
+                    coincide = true;
+                    break;
+                }
+            }
+        }
+
+        filas[i].style.display = coincide ? "" : "none";
+    }
+    return;
+}
+
+
+
+
+
+async function actualizarEstudiante(form, id) {
+    const token = sessionStorage.getItem('token');
+
+    try {
+        const response = await fetch(`${API_URL}/estudiante/${id}`, {
+            method: 'PUT',
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
+        });
+
+        const data = await response.json();
+
+        switch (response.status) {
+            case 401:
+                usuario_no_autenticado();
+                break;
+
+            case 422:
+                validarErrores("-editEstudiante", data.error);
+                break;
+
+            case 404:
+                notificar('Atencion!', data.mensaje);
+                break;
+
+            case 500:
+                notificar("Error", data.mensaje, "error");
+                break;
+
+            case 200:
+                notificar("Operacion exitosa!", data.mensaje, "success");
+                break;
+
+            default:
+                notificar("Error", "Ha ocurrido un error inesperado", "error");
+                break;
+        }
+
+        return;
+
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error(error);
+        return;
+    }
+}
+
+async function eliminarEstudiante(id, boton) {
+    const token = sessionStorage.getItem('token');
+
+    try {
+
+        const response = await fetch(`${API_URL}/estudiante/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.status === 404) {
+            notificar("Error", data.mensaje);
+            return;
+        }
+
+        notificar("Operacion Exitosa", data.mensaje, "success");
+
+        fila = boton.parentNode.parentNode;
+
+        fila.remove();
+
+        return;
+
+    } catch (error) {
+        notificar('Error', "Error de conexion con el servidor", "error");
+    }
+
+}
+
+
+async function obtenerUsuariosBloqueados() {
+    const token = sessionStorage.getItem('token');
+
+    try {
+        const response = await fetch(`${API_URL}/usuario/bloqueado`, {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+    
+        const usuarios = await response.json();
+    
+        if (!usuarios.usuarios) {
+            notificar("Atencion!", usuarios.mensaje);
+            return;
+        }
+    
+        /* console.log(usuarios.usuarios); */
+    
+        renderizarTablaUsuariosBloqueados(usuarios.usuarios);
+
+        return;
+
+    } catch (error) {
+        notificar('Error', "No fue Posible conectarse al servidor", "error");
+        console.error(error);
+        return;
+    }
+
+}
+
+function renderizarTablaUsuariosBloqueados(usuarios) {
+    const tabla = document.getElementById('cuerpo_usuarios_bloqueados');
+    tabla.innerHTML = '';
+
+    usuarios.forEach(usuario => {
+        const fila = document.createElement('tr');
+
+        fila.innerHTML = `
+            <td><span class="data">${usuario.cedula}</span></td>
+            <td><span class="data">${usuario.nombre}</span></td>
+            <td><span class="data">${usuario.apellido}</span></td>
+            <td><span class="data">${usuario.rol.nombre_rol}</span></td>
+            <td>
+                <button onclick="desbloquearUsuario(${usuario.id}, this);" class="btn btn-primary">Desbloquear</button>
+            </td>
+        `;
+
+        tabla.appendChild(fila);
+
     });
 }
 
-// ========================
-// Estudiantes CRUD
-// ========================
-async function crearEstudiante(form) {
-    await crudAction('/estudiante', 'POST', form);
-}
 
-async function actualizarEstudiante(form, id) {
-    await crudAction('/estudiante', 'PUT', form, id);
-}
+async function desbloquearUsuario(id, boton) {
+    const token = sessionStorage.getItem('token');
 
-async function eliminarEstudiante(id) {
-    await crudAction('/estudiante', 'DELETE', null, id);
-}
-
-async function obtenerEstudianteParaEditar(id) {
     try {
-        const { response, data } = await apiRequest(`/estudiante/${id}`);
-        if (response.status === 200) {
-            document.getElementById('id_edit_estudiante').value = id;
-            if (data.estudiante) {
-                const s = data.estudiante;
-                const form = document.getElementById('editEstudianteForm');
-                if (form.nombre) form.nombre.value = s.nombre || '';
-                if (form.apellido) form.apellido.value = s.apellido || '';
-                if (form.cedula) form.cedula.value = s.cedula || '';
-                if (form.correo) form.correo.value = s.correo || '';
-                if (form.seccion) form.seccion.value = s.seccion || '';
+        const response = await fetch(`${API_URL}/usuario/${id}/estado/activo`, {
+            method: 'PATCH',
+            headers: {
+                "Authorization": "Bearer " + token
             }
-            showSection('editEstudiante');
+        });
+
+        const data = response.json();
+
+        switch (response.status) {
+            case 404:
+                notificar('Atencion!', data.mensaje);
+                break;
+
+            case 500:
+                notificar('Error', data.mensaje, "error");
+                break;
+
+            case 200:
+                notificar('Operacion exitosa!', data.mensaje, "success");
+
+                fila = boton.parentNode.parentNode;
+
+                fila.remove();
+
+                break;
+        
+            default:
+                break;
         }
+
+        return;
+
     } catch (error) {
-        notificar("Error", "No se pudo cargar el estudiante", "error");
+        notificar('Error', "No fue posible conectarse al servidor", "error");
+        console.error(error);
+        return;
     }
 }
 
 
-// ========================
-// Periodos
-// ========================
-
-
 async function obtenerPeriodos() {
-    try {
-        const { response, data } = await apiRequest('/periodo');
-        if (!data.periodos) {
-            notificar("Aviso", data.mensaje, "info");
-            return;
+    const token = sessionStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/periodo`, {
+        headers: {
+            "Authorization": "Bearer " + token
         }
-        renderizarTablaPeriodos(data.periodos);
-    } catch (error) { }
+    });
+
+    const periodos = await response.json();
+
+    if (!periodos.periodos) {
+        notificar('Atencion!', periodos.mensaje);
+        return;
+    }
+
+    /* console.log(periodos.periodos); */
+
+    renderizarTablaPeriodos(periodos.periodos);
+
+    return;
+
 }
 
 function renderizarTablaPeriodos(periodos) {
     const tabla = document.getElementById('cuerpo_periodos');
+
     tabla.innerHTML = '';
 
     periodos.forEach(periodo => {
         const fila = document.createElement('tr');
+
         fila.innerHTML = `
             <td><span class="data">${periodo.año}</span></td>
             <td><span class="data">${periodo.numero_de_periodo}</span></td>
             <td><span class="data">${periodo.fecha_de_inicio}</span></td>
             <td><span class="data">${periodo.fecha_de_cierre}</span></td>
             <td>
-                <button value="${periodo.id}" onclick="obtenerPeriodoParaEditar(${periodo.id})"
-                    class="btn btn-primary">Editar</button>
-                <button onclick="eliminarPeriodo(${periodo.id});" class="btn btn-danger">Eliminar</button>
+                <button value="${periodo.id}" onclick="
+                    document.getElementById('id_edit_periodo').value = this.value;
+                    document.getElementById('año_edit_periodo').value = ${periodo.año};
+                    document.getElementById('numero_edit_periodo').value = ${periodo.numero_de_periodo};
+                    showSection('editPeriodo');"
+                    class="btn btn-primary">Editar
+                </button>
+                <button onclick="eliminarPeriodo(${periodo.id}, this);" class="btn btn-danger">Eliminar</button>
             </td>
         `;
 
@@ -591,126 +1288,362 @@ function renderizarTablaPeriodos(periodos) {
 }
 
 async function crearPeriodo(form) {
-    await crudAction('/periodo', 'POST', form);
-}
 
-async function actualizarPeriodo(form, id) {
-    await crudAction('/periodo', 'PUT', form, id);
-}
+    const token = sessionStorage.getItem('token');
 
-async function eliminarPeriodo(id) {
-    await crudAction('/periodo', 'DELETE', null, id);
-}
-
-async function obtenerPeriodoParaEditar(id) {
     try {
-        const { response, data } = await apiRequest(`/periodo/${id}`);
-        if (response.status === 200) {
-            document.getElementById('id_edit_periodo').value = id;
-            if (data.periodo) {
-                const p = data.periodo;
-                const form = document.getElementById('editPeriodoForm');
-                if (form.año) form.año.value = p.año || '';
-                if (form.numero_de_periodo) form.numero_de_periodo.value = p.numero_de_periodo || '';
-                if (form.fecha_de_inicio) form.fecha_de_inicio.value = p.fecha_de_inicio || '';
-                if (form.fecha_de_cierre) form.fecha_de_cierre.value = p.fecha_de_cierre || '';
-            }
-            showSection('editPeriodo');
-        }
-    } catch (error) {
-        notificar("Error", "No se pudo cargar el periodo", "error");
-    }
-}
 
-// ========================
-// Docentes
-// ========================
-async function obtenerDocentes() {
-    try {
-        const { response, data } = await apiRequest('/docente');
-        if (!data.docentes) {
-            notificar("Aviso", data.mensaje, "info");
+        const response = await fetch(`${API_URL}/periodo`, {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+            usuario_no_autenticado();
             return;
         }
-        renderizarTablaDocentes(data.docentes);
-    } catch (error) { }
+
+        if (response.status === 422) {
+            validarErrores("-periodoForm", data.error);
+            return;
+        }
+
+        if (response.status === 500) {
+            notificar("Error", data.error, "error");
+            return;
+        }
+
+        if (response.status === 201) {
+            notificar("Operacion exitosa!", data.mensaje, "success");
+            periodoForm.reset();
+            return;
+        }
+
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error(error);
+    }
+
+
+}
+
+
+async function actualizarPeriodo(form, id) {
+
+    const token = sessionStorage.getItem('token');
+
+    try {
+
+        const response = await fetch(`${API_URL}/periodo/${id}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+            usuario_no_autenticado();
+            return;
+        }
+
+        if (response.status === 422) {
+            validarErrores("-editPeriodo", data.error);
+            return;
+        }
+
+        if (response.status === 404) {
+            notificar("Atencion!", data.mensaje);
+            return;
+        }
+
+        if (response.status === 500) {
+            notificar("Error", data.mensaje, "error");
+            return;
+        }
+
+        if (response.status === 200) {
+            notificar("Operacion Exitosa!", data.mensaje, "success");
+            periodoEdit.reset();
+            return;
+        }
+
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error(error);
+    }
+
+
+}
+
+async function eliminarPeriodo(id, boton) {
+
+    token = sessionStorage.getItem('token');
+
+    try {
+        const response = await fetch(`${API_URL}/periodo/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+        });
+
+        const data = await response.json();
+
+        if (data.estatus === 404) {
+            notificar('Atencion!', data.mensaje);
+            return;
+        }
+
+        if (data.estatus === 500) {
+            notificar('Error', data.mensaje, "error");
+            return;
+        }
+
+        notificar("Operacion exitosa!", data.mensaje, "success");
+
+        fila = boton.parentNode.parentNode;
+
+        fila.remove();
+
+        return;
+
+    } catch (error) {
+
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error("error de conexion con el servidor");
+        return;
+    }
+
+}
+
+async function obtenerDocentes() {
+    const token = sessionStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/docente`, {
+        headers: {
+            "Authorization": "Bearer " + token
+        }
+    });
+
+    const docentes = await response.json();
+
+    if (!docentes.docentes) {
+        notificar("Atencion!", data.mensaje)
+        return;
+    }
+
+    /* console.log(docentes.docentes); */
+
+    renderizarTablaDocentes(docentes.docentes);
+    return;
 }
 
 function renderizarTablaDocentes(docentes) {
     const tabla = document.getElementById('cuerpo_docentes');
+
     tabla.innerHTML = '';
 
     docentes.forEach(docente => {
         const fila = document.createElement('tr');
+
         fila.innerHTML = `
             <td><span class="data">${docente.cedula}</span></td>
             <td><span class="data">${docente.nombre}</span></td>
             <td><span class="data">${docente.apellido}</span></td>
             <td><span class="data">${docente.nombre_materia}</span></td>
             <td>
-                <button value="${docente.id}" onclick="obtenerDocenteParaEditar(${docente.id})"
-                    class="btn btn-primary">Editar</button>
-                <button onclick="eliminarDocente(${docente.id});" class="btn btn-danger">Eliminar</button>
+                <button onclick="eliminarDocente(${docente.id}, this);" class="btn btn-danger">Bloquear</button>
             </td>
         `;
         tabla.appendChild(fila);
     });
+
+    return;
 }
 
 async function crearDocente(form) {
-    await crudAction('/docente', 'POST', form);
-}
+    const token = sessionStorage.getItem('token');
 
-async function actualizarDocente(form, id) {
-    await crudAction('/docente', 'PUT', form, id);
-}
-
-async function eliminarDocente(id) {
-    await crudAction('/docente', 'DELETE', null, id);
-}
-
-
-async function obtenerDocenteParaEditar(id) {
     try {
-        const { response, data } = await apiRequest(`/docente/${id}`);
-        if (response.status === 200) {
-            document.getElementById('id_edit_docente').value = id;
-            if (data.docente) {
-                const d = data.docente;
-                const form = document.getElementById('editDocenteForm');
-                if (form.nombre) form.nombre.value = d.nombre || '';
-                if (form.apellido) form.apellido.value = d.apellido || '';
-                if (form.cedula) form.cedula.value = d.cedula || '';
-                if (form.correo) form.correo.value = d.correo || '';
-                if (form.materia) form.materia.value = d.materia || '';
-                if (form.fecha_de_nacimiento) form.fecha_de_nacimiento.value = d.fecha_de_nacimiento || '';
-            }
-            showSection('editDocente');
-        }
-    } catch (error) {
-        notificar("Error", "No se pudo cargar el docente", "error");
-    }
-}
 
-
-// ========================
-// Boletín
-// ========================
-
-async function cargarBoletin(form) {
-    try {
-        const { response, data } = await apiRequest('/nota/final', {
-            method: 'POST',
-            body: JSON.stringify(form)
+        const response = await fetch(`${API_URL}/docente`, {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
         });
 
-        if (data.estatus === 404) {
-            notificar("Aviso", data.mensaje, "info");
+        const data = await response.json();
+
+        if (response.status === 401) {
+            usuario_no_autenticado();
             return;
         }
 
+        if (response.status === 422) {
+            validarErrores('-docenteForm', data.error);
+            return;
+        }
+
+        if (response.status === 500) {
+            notificar("Error", data.mensaje, "error");
+            return;
+        }
+
+        if (response.status === 201) {
+            notificar('Operacion exitosa!', data.mensaje, "success");
+            DocenteForm.reset();
+            return;
+        }
+
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error(error);
+        return;
+    }
+}
+
+async function actualizarDocente(form, id) {
+    const token = sessionStorage.getItem('token');
+
+    try {
+
+        console.log(form);
+
+        const response = await fetch(`${API_URL}/docente/${id}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
+        });
+
+        const data = await response.json();
+
+        console.log(data);
+
+        if (response.status === 401) {
+            usuario_no_autenticado();
+            return;
+        }
+
+        if (response.status === 422) {
+            validarErrores('-editDocente', data.error);
+            return;
+        }
+
+        if (response.status === 404) {
+            notificar("Atencion!", data.mensaje);
+            return;
+        }
+
+        if (response.status === 500) {
+            notificar("Error", data.mensaje, "error");
+            return;
+        }
+
+        if (response.status === 200) {
+            notificar('Operacion exitosa!', data.mensaje, "success");
+            DocenteEdit.reset();
+            return;
+        }
+
+        return;
+
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error(error);
+        return;
+    }
+}
+
+async function eliminarDocente(id, boton) {
+    const token = sessionStorage.getItem('token');
+
+    try {
+        const response = await fetch(`${API_URL}/docente/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+        });
+
+        const data = await response.json();
+
+        if (data.estatus === 404) {
+            notificar("Atencion!", data.mensaje);
+            return;
+        }
+
+        if (data.estatus === 500) {
+            notificar("Error", data.mensaje, "error");
+            return;
+        }
+
+        /* console.log(data); */
+
+        notificar('Operacion exitosa!', data.mensaje, "success");
+
+        fila = boton.parentNode.parentNode;
+
+        fila.remove();
+
+        return;
+
+    } catch (error) {
+
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error(error);
+
+        return;
+    }
+
+}
+
+async function cargarBoletin(form) {
+    const token = sessionStorage.getItem('token');
+
+    try {
+        const response = await fetch(`${API_URL}/nota/final`, {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
+        });
+
+        const data = await response.json();
+
+        if (data.estatus === 404) {
+            notificar('Atencion!', data.mensaje);
+            return;
+        }
+
+        /* console.log(data); */
+
         renderizarBoletin(data.nota, form);
-    } catch (error) { }
+        return;
+
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.log(error);
+        return;
+    }
+
 }
 
 function renderizarBoletin(nota, dataEstudiante) {
@@ -723,6 +1656,7 @@ function renderizarBoletin(nota, dataEstudiante) {
         <td><span class="data">${nota[0].nombre}</span></td>
         <td><span class="data">${nota[0].apellido}</span></td>
     `;
+
     document.getElementById('pie_Cedula').innerHTML = `${nota[0].cedula}`;
 
     nota.forEach(nt => {
@@ -737,45 +1671,72 @@ function renderizarBoletin(nota, dataEstudiante) {
     });
 
     cargarBotonImpresion();
+
+    return;
 }
 
 function cargarBotonImpresion() {
     const div = document.getElementById('boletin');
+
     if (!document.getElementById('botonImpresion')) {
         const boton = Object.assign(document.createElement("button"), {
             innerHTML: "Imprimir",
             className: "btn btn-primary",
             style: "margin-top: 5px",
             id: "botonImpresion",
-            onclick: function() {
+            onclick: function () {
                 const tabla = document.getElementById('tabla_Boletin');
+
                 tabla.classList.add('pdf');
+
                 const config = {
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, backgroundColor: '#ffffff' },
+                    html2canvas: {
+                        scale: 2,
+                        backgroundColor: '#ffffff'
+                    },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
+
                 html2pdf().set(config).from(tabla).save('Reporte_Boletin_Informativo.pdf').then(() => {
                     tabla.classList.remove('pdf');
                 });
             }
         });
+
         div.appendChild(boton);
     }
+
+    return;
+
 }
 
-// ========================
-// Inscripciones
-// ========================
 async function obtenerInscripciones() {
+    const token = sessionStorage.getItem('token');
+
     try {
-        const { response, data } = await apiRequest('/inscripcion');
-        if (!data.inscripciones) {
-            notificar("Aviso", data.mensaje, "info");
+        const response = await fetch(`${API_URL}/inscripcion`, {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const inscripciones = await response.json();
+
+        if (!inscripciones.inscripciones) {
+            notificar('Atencion!', inscripciones.mensaje);
             return;
         }
-        renderizarTablaInscripciones(data.inscripciones);
-    } catch (error) { }
+
+        renderizarTablaInscripciones(inscripciones.inscripciones);
+        return;
+
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error(error);
+        return;
+    }
+
 }
 
 function renderizarTablaInscripciones(inscripciones) {
@@ -784,6 +1745,7 @@ function renderizarTablaInscripciones(inscripciones) {
 
     inscripciones.forEach(inscripcion => {
         const fila = document.createElement('tr');
+
         fila.innerHTML = `
             <td><span class="data">${inscripcion.cedula}</span></td>
             <td>
@@ -793,35 +1755,111 @@ function renderizarTablaInscripciones(inscripciones) {
             <td><span class="data">${inscripcion.seccion}</span></td>
             <td><span class="data">${inscripcion.fecha_de_inscripcion}</span></td>
         `;
+
         tabla.appendChild(fila);
     });
 }
 
 async function crearInscripcion(form) {
-    await crudAction('/inscripcion', 'POST', form);
+    try {
+
+        const token = sessionStorage.getItem('token');
+
+        const response = await fetch(`${API_URL}/inscripcion`, {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+            },
+            body: form
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401) {
+            usuario_no_autenticado();
+            return;
+        }
+
+        if (response.status === 400) {
+            validarErrores("-inscripcionForm", data.error);
+            return;
+        }
+
+        if (response.status === 500) {
+            notificar("Error", data.mensaje, "error");
+            return;
+        }
+
+        if (response.status === 201) {
+            notificar('Operacion exitosa!', data.mensaje, "success");
+            InscripcionForm.reset();
+            return;
+        }
+
+    } catch (error) {
+        notificar("Error", "No fue posible conectarse al servidor", "error");
+        console.error(error);
+    }
 }
 
-// ========================
-// Filtro de búsqueda
-// ========================
-function filtrarBusqueda() {
-    const input = document.getElementById('buscadorInput');
-    const filtro = input.value.toUpperCase();
-    const tabla = document.getElementById("tabla_estudiantes");
-    const filas = tabla.getElementsByTagName("tr");
+function notificar(titulo, mensaje, tipo = 'info') {
 
-    for (let i = 1; i < filas.length; i++) {
-        const celdas = filas[i].getElementsByTagName("td");
-        let coincide = false;
-        for (let j = 0; j < celdas.length; j++) {
-            if (celdas[j]) {
-                const texto = celdas[j].textContent || celdas[j].innerText;
-                if (texto.toUpperCase().indexOf(filtro) > -1) {
-                    coincide = true;
-                    break;
-                }
-            }
-        }
-        filas[i].style.display = coincide ? "" : "none";
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
     }
+
+
+    const toast = document.createElement('div');
+    toast.className = `toast-card ${tipo}`;
+
+
+    let iconoSVG = '';
+
+    if (tipo === 'success') iconoSVG = '✅';
+    else if (tipo === 'error') iconoSVG = '❌';
+    else iconoSVG = '🔔';
+
+
+    toast.innerHTML = `
+        <div class="toast-icon">${iconoSVG}</div>
+        <div class="toast-content">
+            <div class="toast-title">${titulo}</div>
+            <div class="toast-message">${mensaje}</div>
+            <button class="toast-btn">Aceptar</button>
+        </div>
+    `;
+
+
+    container.appendChild(toast);
+
+
+    const btn = toast.querySelector('.toast-btn');
+    btn.addEventListener('click', () => {
+        toast.classList.add('hide');
+        toast.addEventListener('animationend', () => {
+            toast.remove();
+        });
+    });
+}
+
+
+function validarErrores(clase, errores) {
+
+    document.querySelectorAll('.error-div').forEach(div => div.innerHTML = '');
+
+    for (const campo in errores) {
+
+        const error = document.querySelector(`.error-div[data-field=${campo}${clase}]`);
+
+        if (error) {
+            error.style.cssText = 'font-size: 0.875rem; color: var(--danger)';
+            error.innerHTML = errores[campo].join('<br>');
+        }
+
+    }
+
 }
