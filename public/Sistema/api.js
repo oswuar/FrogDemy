@@ -16,6 +16,7 @@ async function apiRequest(endpoint, options = {}) {
     const token = getToken();
     const headers = {
         'Content-Type': 'application/json',
+        'Accept': 'application/json' ,
         ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
     };
